@@ -17,7 +17,7 @@ export default function ClusterModal({ cluster, onClose, onDispatchRoute }) {
   if (!cluster) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Header */}
         <div className="bg-[#0a251c] text-white px-6 py-4 flex items-center justify-between">

@@ -50,8 +50,7 @@ export default function Sidebar({
     { id: 'risk_map', label: 'Risk Map', icon: Flame },
     { id: 'reports', label: 'Reports', icon: FileText },
     { id: 'alerts', label: 'Alerts', icon: Bell, badge: '3' },
-    { id: 'users', label: 'Users', icon: Users },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'settings', label: 'AI Config', icon: Settings },
   ];
 
   const adminQuickActions = [

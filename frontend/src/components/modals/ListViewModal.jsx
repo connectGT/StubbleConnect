@@ -8,7 +8,12 @@ import {
   Flame,
   CheckCircle,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Wheat,
+  Share2,
+  Settings,
+  Cpu,
+  Truck
 } from 'lucide-react';
 import {
   recentActivities,
@@ -18,6 +23,8 @@ import {
 export default function ListViewModal({ type, onClose, onSelectCluster }) {
   const [routes, setRoutes] = useState([]);
   const [buyers, setBuyers] = useState([]);
+  const [fields, setFields] = useState([]);
+  const [clusters, setClusters] = useState([]);
 
   useEffect(() => {
     if (type === 'routes') {
@@ -30,12 +37,22 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
         .then(res => res.json())
         .then(data => { if(data.status === 'success') setBuyers(data.data); });
     }
+    if (type === 'fields') {
+      fetch('http://localhost:8000/api/v1/fields')
+        .then(res => res.json())
+        .then(data => { if(data.status === 'success') setFields(data.data); });
+    }
+    if (type === 'clusters') {
+      fetch('http://localhost:8000/api/v1/clusters')
+        .then(res => res.json())
+        .then(data => { if(data.status === 'success') setClusters(data.data); });
+    }
   }, [type]);
 
   if (!type) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
         <div className="bg-[#0a251c] text-white px-6 py-4 flex items-center justify-between">
@@ -45,6 +62,9 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
             {type === 'buyers' && <Building2 className="w-5 h-5 text-emerald-400" />}
             {type === 'notifications' && <Bell className="w-5 h-5 text-amber-400" />}
             {type === 'risk' && <Flame className="w-5 h-5 text-red-400" />}
+            {type === 'fields' && <Wheat className="w-5 h-5 text-amber-400" />}
+            {type === 'clusters' && <Share2 className="w-5 h-5 text-blue-400" />}
+            {type === 'settings' && <Cpu className="w-5 h-5 text-purple-400" />}
 
             <h3 className="font-bold text-base text-white">
               {type === 'activity' && 'Real-Time Activity Feed'}
@@ -52,6 +72,9 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
               {type === 'buyers' && 'Biomass Off-Takers & Capacity Registry'}
               {type === 'notifications' && 'System Notifications & Critical Alerts'}
               {type === 'risk' && 'High Burning Risk Zones'}
+              {type === 'fields' && 'Registered Fields Directory'}
+              {type === 'clusters' && 'Active Collection Clusters'}
+              {type === 'settings' && 'AI Logistics Engine Settings'}
             </h3>
           </div>
 
@@ -132,6 +155,107 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {type === 'fields' && (
+            <div className="space-y-3">
+              {fields.map((f) => (
+                <div key={f.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80 flex justify-between items-center">
+                  <div>
+                    <h4 className="font-bold text-sm text-gray-900">{f.farmer_name}</h4>
+                    <p className="text-gray-500">Location: {f.village} &bull; Size: {f.area_acres} Acres</p>
+                    <p className="text-emerald-700 font-semibold mt-1">Est. Biomass: {f.biomass} Tonnes</p>
+                  </div>
+                  <div>
+                    {f.is_clustered ? (
+                       <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">Clustered</span>
+                    ) : (
+                       <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">Pending</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {type === 'clusters' && (
+            <div className="space-y-3">
+              {clusters.map((c) => (
+                <div key={c.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="font-bold text-sm text-gray-900">Cluster {c.name}</h4>
+                      <p className="text-gray-500 mt-0.5">{c.farms_count} Farms Combined</p>
+                    </div>
+                    <div className="text-right">
+                       <span className="font-bold text-sm text-emerald-700">{c.total_biomass} Tonnes</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg font-semibold hover:bg-blue-100 flex gap-1 items-center">
+                       <Route className="w-3.5 h-3.5" /> Plan Route
+                    </button>
+                    <button className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 flex gap-1 items-center">
+                       Inspect Map
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {type === 'settings' && (
+            <div className="space-y-6">
+              <div className="p-5 border border-purple-100 bg-purple-50/30 rounded-xl">
+                 <h4 className="font-bold text-purple-900 text-sm mb-4 flex gap-2 items-center"><Cpu className="w-4 h-4"/> VRP Optimization Parameters</h4>
+                 
+                 <div className="space-y-5">
+                    <div>
+                       <div className="flex justify-between mb-1">
+                          <label className="font-semibold text-gray-700">Min. Biomass Threshold for Clustering</label>
+                          <span className="font-bold text-purple-700">50 Tonnes</span>
+                       </div>
+                       <input type="range" min="10" max="100" defaultValue="50" className="w-full accent-purple-600" />
+                       <p className="text-[10px] text-gray-500 mt-1">Algorithm will not form a cluster until this threshold is met.</p>
+                    </div>
+
+                    <div>
+                       <div className="flex justify-between mb-1">
+                          <label className="font-semibold text-gray-700">Max Truck Routing Distance</label>
+                          <span className="font-bold text-purple-700">35 km</span>
+                       </div>
+                       <input type="range" min="10" max="100" defaultValue="35" className="w-full accent-purple-600" />
+                       <p className="text-[10px] text-gray-500 mt-1">Maximum radius for fleet dispatch from a central buyer facility.</p>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="p-5 border border-gray-200 bg-white shadow-xs rounded-xl space-y-4">
+                 <h4 className="font-bold text-gray-900 text-sm mb-2">Automation Integrations</h4>
+                 
+                 <label className="flex items-center justify-between cursor-pointer">
+                    <div>
+                       <div className="font-semibold text-gray-800">Auto-Dispatch Fleet on Match</div>
+                       <div className="text-[10px] text-gray-500 mt-0.5">Automatically ping trucks when a route is generated</div>
+                    </div>
+                    <div className="relative">
+                       <input type="checkbox" defaultChecked className="sr-only peer" />
+                       <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </div>
+                 </label>
+
+                 <label className="flex items-center justify-between cursor-pointer">
+                    <div>
+                       <div className="font-semibold text-gray-800">ISRO/NASA Fire Satellite Sync</div>
+                       <div className="text-[10px] text-gray-500 mt-0.5">Ingest VIIRS/MODIS thermal anomalies for risk mapping</div>
+                    </div>
+                    <div className="relative">
+                       <input type="checkbox" defaultChecked className="sr-only peer" />
+                       <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+                    </div>
+                 </label>
+              </div>
             </div>
           )}
 

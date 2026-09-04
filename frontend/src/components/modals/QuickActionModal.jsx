@@ -28,14 +28,14 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     farmerName: '',
     phone: '',
-    village: 'Talwandi Sabo', // Default dropdown value
+    village: 'Talwandi Sabo',
     acres: '10',
     cropType: 'Paddy / Basmati',
-    harvestDate: '2025-08-20',
+    harvestDate: '2026-09-06',
     buyerName: '',
     buyerType: 'Biogas & Bio-CNG',
     buyerCapacity: '500',
-    buyerLocation: 'Bathinda City' // Default dropdown value
+    buyerLocation: 'Bathinda City'
   });
 
   const [loading, setLoading] = useState(false);
@@ -128,8 +128,8 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="bg-[#0a251c] text-white px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -166,58 +166,75 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
             <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
               <div>
                 <label className="block font-semibold text-gray-700 mb-1">
-                  Farmer Full Name
+                  Select Field
                 </label>
-                <input
-                  type="text"
+                <select
                   required
-                  placeholder="e.g. Jaswinder Singh"
-                  value={formData.farmerName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, farmerName: e.target.value })
-                  }
+                  value={formData.village}
+                  onChange={(e) => {
+                    const acreLookup = {
+                      'Talwandi Sabo': '10',
+                      'Rampura Phul': '12',
+                      'Bathinda City': '8',
+                      'Mansa': '15',
+                      'Goniana': '7',
+                      'Bhucho Mandi': '11',
+                    };
+                    setFormData({
+                      ...formData,
+                      village: e.target.value,
+                      acres: acreLookup[e.target.value] || formData.acres
+                    });
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
-                />
+                >
+                  <option value="">Select a saved field...</option>
+                  <option value="Talwandi Sabo">Farm A – Talwandi Sabo (10 Acres)</option>
+                  <option value="Rampura Phul">Farm B – Rampura Phul (12 Acres)</option>
+                  <option value="Bathinda City">Farm C – Bathinda City (8 Acres)</option>
+                  <option value="Mansa">Farm D – Mansa (15 Acres)</option>
+                  <option value="Goniana">Farm E – Goniana (7 Acres)</option>
+                  <option value="Bhucho Mandi">Farm F – Bhucho Mandi (11 Acres)</option>
+                  <option value="new">+ Add New Field Location</option>
+                </select>
+                <p className="text-gray-500 mt-1 text-[10px]">Select a previously saved field to declare its harvest, or add a new one. Area will auto-fill.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-gray-700 mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="+91 98765-XXXXX"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-gray-700 mb-1">
-                    Village / District
+                    Crop Type
                   </label>
                   <select
-                    value={formData.village}
+                    value={formData.cropType}
                     onChange={(e) =>
-                      setFormData({ ...formData, village: e.target.value })
+                      setFormData({ ...formData, cropType: e.target.value })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                   >
-                    {Object.keys(PUNJAB_LOCATIONS).map((loc) => (
-                      <option key={loc} value={loc}>{loc}</option>
-                    ))}
+                    <optgroup label="Paddy Varieties">
+                      <option value="Paddy / Basmati">Paddy / Basmati</option>
+                      <option value="Paddy / Non-Basmati">Paddy / Non-Basmati</option>
+                      <option value="Paddy / PR-126">Paddy / PR-126</option>
+                    </optgroup>
+                    <optgroup label="Wheat Varieties">
+                      <option value="Wheat / HD-3086">Wheat / HD-3086</option>
+                      <option value="Wheat / PBW-343">Wheat / PBW-343</option>
+                    </optgroup>
+                    <optgroup label="Other Crops">
+                      <option value="Sugarcane">Sugarcane</option>
+                      <option value="Maize / Corn">Maize / Corn</option>
+                      <option value="Cotton">Cotton</option>
+                      <option value="Mustard / Sarson">Mustard / Sarson</option>
+                      <option value="Sunflower">Sunflower</option>
+                      <option value="Moong Dal">Moong Dal</option>
+                      <option value="Chickpea / Chana">Chickpea / Chana</option>
+                    </optgroup>
                   </select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-gray-700 mb-1">
-                    Field Area (Acres)
+                    Harvestable Area (Acres)
                   </label>
                   <input
                     type="number"
@@ -230,20 +247,22 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                   />
                 </div>
-                <div>
-                  <label className="block font-semibold text-gray-700 mb-1">
-                    Estimated Harvest Date
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.harvestDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, harvestDate: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
-                  />
-                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">
+                  Estimated Harvest Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={formData.harvestDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, harvestDate: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+                />
+                <p className="text-gray-500 mt-1 text-[10px]">Our logistics window is 0–5 days from this date. We'll assign a pickup slot accordingly.</p>
               </div>
 
               <div className="pt-2 flex justify-end gap-2">
@@ -263,6 +282,7 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
                 </button>
               </div>
             </form>
+
           ) : actionType === 'add_buyer' ? (
             <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
               <div>

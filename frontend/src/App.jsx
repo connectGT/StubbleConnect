@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import StatsRow from './components/StatsRow';
@@ -8,14 +8,30 @@ import ClusterModal from './components/modals/ClusterModal';
 import QuickActionModal from './components/modals/QuickActionModal';
 import ListViewModal from './components/modals/ListViewModal';
 import FarmerDashboard from './components/FarmerDashboard';
+import FarmerLoginPage from './components/FarmerLoginPage';
 import { statsData, clustersData, buyersData, routesData } from './data/mockData';
 
 export default function App() {
+  // Auth state — load from localStorage for persistence
+  const [farmerUser, setFarmerUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('stubble_farmer_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+
   // State management
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [userRole, setUserRole] = useState('admin'); // 'admin' | 'farmer'
+  // If we already have a logged-in farmer, start in farmer role
+  const [userRole, setUserRole] = useState(() => {
+    try {
+      const saved = localStorage.getItem('stubble_farmer_user');
+      return saved ? 'farmer' : 'admin';
+    } catch { return 'admin'; }
+  });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
   
   // Selected Cluster (Defaults to Cluster #12 from reference image)
   const defaultCluster = clustersData.find((c) => c.number === 12) || clustersData[0];
@@ -29,14 +45,13 @@ export default function App() {
     fetch('http://localhost:8000/api/v1/analytics/dashboard-kpi')
       .then(res => res.json())
       .then(data => {
-        // Map backend keys to frontend keys
         setStats([
-          { id: 'total_fields', title: 'Total Registered Fields', value: data.total_fields.toString(), subtext: '+12% from last week', trend: 'up' },
-          { id: 'total_biomass', title: 'Est. Biomass Available', value: data.total_biomass_tonnes + ' T', subtext: 'Ready for harvest', trend: 'up' },
-          { id: 'active_clusters', title: 'Active Field Clusters', value: data.active_clusters.toString(), subtext: `${data.matched_clusters} matched with buyers`, trend: 'up' },
-          { id: 'routes_planned', title: 'Logistics Routes Planned', value: data.routes_planned.toString(), subtext: 'Pending dispatch', trend: 'down' },
-          { id: 'high_risk_areas', title: 'High Risk Areas', value: data.high_risk_areas.toString(), subtext: 'Immediate action required', trend: 'down' },
-          { id: 'daily_capacity', title: 'Daily Buyer Capacity', value: '1,200 T', subtext: 'Across 4 active plants', trend: 'up' } // Harcoded capacity for now
+          { id: 'total_fields', title: 'Total Registered Fields', value: data.total_fields.toString(), subtext: 'Farms registered', trend: 'up', icon: 'Leaf', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+          { id: 'total_biomass', title: 'Est. Biomass Available', value: data.total_biomass_tonnes, unit: 'T', subtext: 'Ready for harvest', trend: 'up', icon: 'Package', iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
+          { id: 'active_clusters', title: 'Active Field Clusters', value: data.active_clusters.toString(), subtext: 'Grouped collection zones', trend: 'up', icon: 'Users', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', trendType: 'info' },
+          { id: 'routes_planned', title: 'Logistics Routes Planned', value: data.routes_planned.toString(), subtext: 'Pending dispatch', trend: 'down', icon: 'Truck', iconBg: 'bg-cyan-50', iconColor: 'text-cyan-600', trendType: 'teal' },
+          { id: 'high_risk', title: 'High Risk Areas', value: data.high_risk_areas.toString(), subtext: 'Immediate action required', trend: 'down', icon: 'Flame', iconBg: 'bg-red-50', iconColor: 'text-red-600', isAlert: true },
+          { id: 'daily_capacity', title: 'Buyer Processing Cap.', value: data.total_buyer_capacity, unit: 'T', subtext: 'Across active plants', trend: 'up', icon: 'Handshake', iconBg: 'bg-purple-50', iconColor: 'text-purple-600' }
         ]);
       })
       .catch(err => console.error("Could not fetch live stats:", err));
@@ -60,11 +75,35 @@ export default function App() {
     setActiveQuickAction(actionId);
   };
 
-  // Switch role handler with toast
+  // Login handler — saves to localStorage for persistence
+  const handleLogin = (user) => {
+    setFarmerUser(user);
+    localStorage.setItem('stubble_farmer_user', JSON.stringify(user));
+  };
+
+  // Logout handler — clears localStorage, returns to admin
+  const handleLogout = () => {
+    setFarmerUser(null);
+    setUserRole('admin');
+    localStorage.removeItem('stubble_farmer_user');
+    showToast('Logged out successfully');
+  };
+
+  // Switch role handler — does NOT wipe farmerUser (use logout for that)
   const handleRoleChange = (newRole) => {
     setUserRole(newRole);
     showToast(`Switched to ${newRole === 'admin' ? 'Operations Admin' : 'Farmer'} Mode`);
   };
+
+  // If farmer role but not logged in — show login gate
+  if (userRole === 'farmer' && !farmerUser) {
+    return (
+      <FarmerLoginPage
+        onLogin={(user) => { handleLogin(user); }}
+      />
+    );
+  }
+
 
   return (
     <div className="min-h-screen bg-[#f3f6f4] text-slate-800 font-sans flex antialiased">
@@ -73,14 +112,22 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={(tab) => {
           setActiveTab(tab);
-          if (tab === 'risk_map') {
-            setListViewModalType('risk');
-          } else if (tab === 'alerts') {
-            setListViewModalType('notifications');
-          } else if (tab === 'routes') {
-            setListViewModalType('routes');
-          } else if (tab === 'buyers') {
-            setListViewModalType('buyers');
+          if (tab === 'reports') {
+            showToast("Generating AI Carbon Impact Report...");
+            setTimeout(() => showToast("Report downloaded successfully!"), 2000);
+            return;
+          }
+          const modalMap = {
+            'risk_map': 'risk',
+            'alerts': 'notifications',
+            'routes': 'routes',
+            'buyers': 'buyers',
+            'fields': 'fields',
+            'clusters': 'clusters',
+            'settings': 'settings'
+          };
+          if (modalMap[tab]) {
+            setListViewModalType(modalMap[tab]);
           }
         }}
         onQuickAction={handleQuickAction}
@@ -98,9 +145,11 @@ export default function App() {
           setSearchTerm={setSearchTerm}
           onOpenMobileMenu={() => setIsMobileOpen(true)}
           userRole={userRole}
+          farmerUser={farmerUser}
+          onLogout={handleLogout}
           onOpenNotifications={() => setListViewModalType('notifications')}
           onOpenProfile={() =>
-            showToast(`Logged in as ${userRole === 'admin' ? 'Admin (Operations)' : 'Farmer (Harjit Singh)'}`)
+            showToast(`Logged in as ${userRole === 'admin' ? 'Admin (Operations)' : farmerUser?.name || 'Farmer'}`)
           }
         />
 
@@ -154,9 +203,14 @@ export default function App() {
               />
             </>
           ) : (
-            <FarmerDashboard onRegisterClick={() => setActiveQuickAction('register_field')} />
+            <FarmerDashboard
+              onRegisterClick={() => setActiveQuickAction('register_field')}
+              farmerUser={farmerUser}
+              onLogout={handleLogout}
+            />
           )}
         </main>
+
       </div>
 
       {/* Floating Interactive Toast */}

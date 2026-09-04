@@ -6,7 +6,7 @@ import {
   MapPin,
   Bell,
   User,
-  ChevronDown
+  LogOut,
 } from 'lucide-react';
 
 export default function Header({
@@ -14,9 +14,19 @@ export default function Header({
   setSearchTerm,
   onOpenMobileMenu,
   userRole,
+  farmerUser,
+  onLogout,
   onOpenNotifications,
-  onOpenProfile
+  onOpenProfile,
 }) {
+  const isFarmer = userRole === 'farmer';
+  const displayName = isFarmer && farmerUser
+    ? farmerUser.name.split(' ')[0]
+    : 'Admin';
+  const displaySub = isFarmer && farmerUser
+    ? farmerUser.village
+    : 'Operations';
+
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-gray-200/80 px-4 lg:px-6 py-2.5 flex items-center justify-between gap-4 shadow-xs">
       {/* Left: Mobile Menu & Search */}
@@ -38,19 +48,17 @@ export default function Header({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search farms, clusters, buyers..."
+            placeholder={isFarmer ? 'Search your fields, pickups...' : 'Search farms, clusters, buyers...'}
             className="w-full pl-9 pr-4 py-1.5 bg-gray-50 hover:bg-gray-100/80 focus:bg-white border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
           />
         </div>
       </div>
 
-      {/* Right Controls: Weather, Location, Notifications, Admin Profile */}
-      <div className="flex items-center gap-3 md:gap-5">
-        {/* Weather Widget */}
+      {/* Right Controls */}
+      <div className="flex items-center gap-3 md:gap-4">
+        {/* Weather Widget — hidden in farmer mode on small screens */}
         <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-gray-50/80 rounded-lg border border-gray-100">
-          <div className="text-amber-500">
-            <CloudSun className="w-5 h-5 text-amber-500" />
-          </div>
+          <CloudSun className="w-5 h-5 text-amber-500" />
           <div className="text-left leading-tight">
             <div className="text-xs font-bold text-gray-800">32°C</div>
             <div className="text-[10px] text-gray-500">Partly Cloudy</div>
@@ -59,11 +67,11 @@ export default function Header({
 
         {/* Location Widget */}
         <div className="hidden md:flex items-center gap-2 px-2.5 py-1 bg-gray-50/80 rounded-lg border border-gray-100">
-          <div className="text-rose-500">
-            <MapPin className="w-5 h-5 text-rose-500 fill-rose-500/20" />
-          </div>
+          <MapPin className="w-5 h-5 text-rose-500 fill-rose-500/20" />
           <div className="text-left leading-tight">
-            <div className="text-xs font-bold text-gray-800">Bathinda, Punjab</div>
+            <div className="text-xs font-bold text-gray-800">
+              {isFarmer && farmerUser ? farmerUser.village : 'Bathinda'}
+            </div>
             <div className="text-[10px] text-gray-500">Punjab</div>
           </div>
         </div>
@@ -80,23 +88,35 @@ export default function Header({
           </span>
         </button>
 
-        {/* Admin Profile Avatar */}
-        <button
-          onClick={onOpenProfile}
-          className="flex items-center gap-2 pl-2 border-l border-gray-200 hover:opacity-90 transition-opacity"
-        >
-          <div className="w-8 h-8 rounded-full bg-[#0a251c] text-emerald-400 flex items-center justify-center font-bold text-xs border border-emerald-500/30 shadow-xs">
-            <User className="w-4 h-4 text-emerald-400" />
-          </div>
-          <div className="hidden sm:block text-left leading-tight">
-            <div className="text-xs font-bold text-gray-900">
-              {userRole === 'admin' ? 'Admin' : 'Harjit Singh'}
+        {/* Profile + Logout */}
+        <div className="flex items-center gap-1 pl-2 border-l border-gray-200">
+          <button
+            onClick={onOpenProfile}
+            className="flex items-center gap-2 hover:opacity-90 transition-opacity"
+          >
+            <div className="w-8 h-8 rounded-full bg-[#0a251c] text-emerald-400 flex items-center justify-center font-bold text-xs border border-emerald-500/30 shadow-xs">
+              {isFarmer && farmerUser
+                ? farmerUser.name.charAt(0).toUpperCase()
+                : <User className="w-4 h-4 text-emerald-400" />
+              }
             </div>
-            <div className="text-[10px] text-gray-500">
-              {userRole === 'admin' ? 'Operations' : 'Farmer'}
+            <div className="hidden sm:block text-left leading-tight">
+              <div className="text-xs font-bold text-gray-900">{displayName}</div>
+              <div className="text-[10px] text-gray-500">{displaySub}</div>
             </div>
-          </div>
-        </button>
+          </button>
+
+          {/* Logout — only shown in farmer mode */}
+          {isFarmer && onLogout && (
+            <button
+              onClick={onLogout}
+              title="Logout"
+              className="ml-1 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );
