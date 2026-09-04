@@ -9,6 +9,8 @@ import QuickActionModal from './components/modals/QuickActionModal';
 import ListViewModal from './components/modals/ListViewModal';
 import FarmerDashboard from './components/FarmerDashboard';
 import FarmerLoginPage from './components/FarmerLoginPage';
+import BuyerPanelApp from './buyer_panel/BuyerPanelApp';
+import DriverPanelApp from './driver_panel/DriverPanelApp';
 import { statsData, clustersData, buyersData, routesData } from './data/mockData';
 
 export default function App() {
@@ -89,11 +91,35 @@ export default function App() {
     showToast('Logged out successfully');
   };
 
-  // Switch role handler — does NOT wipe farmerUser (use logout for that)
+  // Switch role handler
   const handleRoleChange = (newRole) => {
     setUserRole(newRole);
-    showToast(`Switched to ${newRole === 'admin' ? 'Operations Admin' : 'Farmer'} Mode`);
+    const roleLabels = {
+      admin: 'Operations Admin',
+      buyer: 'Biogas Plant Buyer',
+      driver: 'Truck Driver Logistics',
+      farmer: 'Farmer'
+    };
+    showToast(`Switched to ${roleLabels[newRole] || newRole} Mode`);
   };
+
+  // If buyer role — launch dedicated Biogas Plant Buyer Portal
+  if (userRole === 'buyer') {
+    return (
+      <BuyerPanelApp
+        onReturnToAdmin={() => setUserRole('admin')}
+      />
+    );
+  }
+
+  // If driver role — launch dedicated Truck Driver Logistics Portal
+  if (userRole === 'driver') {
+    return (
+      <DriverPanelApp
+        onReturnToAdmin={() => setUserRole('admin')}
+      />
+    );
+  }
 
   // If farmer role but not logged in — show login gate
   if (userRole === 'farmer' && !farmerUser) {
@@ -147,6 +173,7 @@ export default function App() {
           userRole={userRole}
           farmerUser={farmerUser}
           onLogout={handleLogout}
+          onSwitchRole={handleRoleChange}
           onOpenNotifications={() => setListViewModalType('notifications')}
           onOpenProfile={() =>
             showToast(`Logged in as ${userRole === 'admin' ? 'Admin (Operations)' : farmerUser?.name || 'Farmer'}`)
@@ -220,6 +247,33 @@ export default function App() {
           <span className="font-medium">{toastMessage}</span>
         </div>
       )}
+
+      {/* High-Visibility Floating Role Launchers */}
+      <div className="fixed bottom-6 left-6 z-40 flex flex-col gap-3">
+        {/* Driver Button (Above) */}
+        <button
+          onClick={() => handleRoleChange('driver')}
+          className="bg-gradient-to-r from-[#071c15] via-[#0e2c21] to-[#071c15] hover:from-[#12382b] text-white font-extrabold text-xs px-4.5 py-3 rounded-2xl shadow-2xl border border-emerald-400/80 flex items-center gap-3 transition-all hover:scale-105 active:scale-95 cursor-pointer ring-2 ring-emerald-500/20 group"
+        >
+          <span className="text-lg group-hover:scale-110 transition-transform">🚚</span>
+          <div className="text-left">
+            <div className="text-[10px] text-emerald-400 font-black uppercase tracking-wider">Parali Pickup</div>
+            <div className="text-xs font-black text-white">Truck Driver Mode</div>
+          </div>
+        </button>
+
+        {/* Biogas Plant Buyer Button (Below) */}
+        <button
+          onClick={() => handleRoleChange('buyer')}
+          className="bg-gradient-to-r from-[#0a251c] via-[#0f3427] to-[#0a251c] hover:from-[#12382b] text-white font-extrabold text-xs px-4.5 py-3 rounded-2xl shadow-2xl border border-emerald-400/80 flex items-center gap-3 transition-all hover:scale-105 active:scale-95 cursor-pointer ring-2 ring-emerald-500/20 group"
+        >
+          <span className="text-lg group-hover:scale-110 transition-transform">🏭</span>
+          <div className="text-left">
+            <div className="text-[10px] text-emerald-400 font-black uppercase tracking-wider">Buyer Portal</div>
+            <div className="text-xs font-black text-white">Biogas Plant Mode</div>
+          </div>
+        </button>
+      </div>
 
       {/* Modal: Full Cluster Breakdown & Logistics Dispatch */}
       {isClusterModalOpen && (
