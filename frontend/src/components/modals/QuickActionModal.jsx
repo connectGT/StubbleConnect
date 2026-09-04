@@ -12,18 +12,30 @@ import {
   Truck
 } from 'lucide-react';
 
+// Exact hardcoded coordinates for guaranteed hackathon demo success
+const PUNJAB_LOCATIONS = {
+  "Bathinda City": { lat: 30.211, lng: 74.945 },
+  "Talwandi Sabo": { lat: 29.988, lng: 75.088 },
+  "Mansa": { lat: 29.989, lng: 75.399 },
+  "Rampura Phul": { lat: 30.272, lng: 75.234 },
+  "Bhucho Mandi": { lat: 30.267, lng: 75.050 },
+  "Maur": { lat: 30.081, lng: 75.245 },
+  "Goniana": { lat: 30.316, lng: 74.901 },
+  "Sangrur": { lat: 30.245, lng: 75.833 }
+};
+
 export default function QuickActionModal({ actionType, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     farmerName: '',
     phone: '',
-    village: 'Bathinda',
+    village: 'Talwandi Sabo', // Default dropdown value
     acres: '10',
     cropType: 'Paddy / Basmati',
     harvestDate: '2025-08-20',
     buyerName: '',
     buyerType: 'Biogas & Bio-CNG',
     buyerCapacity: '500',
-    buyerLocation: 'Bathinda'
+    buyerLocation: 'Bathinda City' // Default dropdown value
   });
 
   const [loading, setLoading] = useState(false);
@@ -31,27 +43,88 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
 
   if (!actionType) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
       if (actionType === 'register_field') {
-        setSuccessMsg(`Field successfully registered for ${formData.farmerName || 'Farmer'}! Added to nearest cluster.`);
-      } else if (actionType === 'add_buyer') {
-        setSuccessMsg(`Buyer ${formData.buyerName || 'Industrial Plant'} onboarded to biomass demand network!`);
-      } else if (actionType === 'run_clustering') {
-        setSuccessMsg('DBSCAN spatial clustering completed! 16 active clusters updated.');
-      } else if (actionType === 'generate_routes') {
-        setSuccessMsg('Vehicle Routing Problem (VRP) solver generated 8 optimal pickup routes!');
-      }
+        const coords = PUNJAB_LOCATIONS[formData.village];
+        // Add tiny jitter so multiple farms in same village don't overlap perfectly
+        const finalLat = coords.lat + (Math.random() * 0.01 - 0.005);
+        const finalLng = coords.lng + (Math.random() * 0.01 - 0.005);
 
+        const payload = {
+          farmer_name: formData.farmerName || 'Farmer',
+          phone: formData.phone || '+910000000000',
+          village: formData.village,
+          district: 'Bathinda',
+          state: 'Punjab',
+          acres: parseFloat(formData.acres) || 1.0,
+          crop_type: formData.cropType || 'Paddy / Basmati',
+          latitude: finalLat,
+          longitude: finalLng,
+          harvest_date: formData.harvestDate
+        };
+
+        const res = await fetch('http://localhost:8000/api/v1/fields/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error('API request failed');
+        
+        const data = await res.json();
+        setSuccessMsg(`Field registered at ${formData.village}! Assigned to spatial grid.`);
+      } else if (actionType === 'add_buyer') {
+        const coords = PUNJAB_LOCATIONS[formData.buyerLocation] || PUNJAB_LOCATIONS["Bathinda City"];
+        const finalLat = coords.lat;
+        const finalLng = coords.lng;
+
+        const payload = {
+          plant_name: formData.buyerName || 'Industrial Plant',
+          facility_type: formData.buyerType,
+          daily_capacity_tonnes: parseFloat(formData.buyerCapacity) || 500,
+          current_stored_tonnes: 0,
+          location: formData.buyerLocation,
+          contact: '+910000000000',
+          latitude: finalLat,
+          longitude: finalLng
+        };
+        const res = await fetch('http://localhost:8000/api/v1/buyers/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('API request failed');
+        const data = await res.json();
+        setSuccessMsg(data.message || `Buyer ${payload.plant_name} onboarded at ${formData.buyerLocation}!`);
+      } else if (actionType === 'run_clustering') {
+        const res = await fetch('http://localhost:8000/api/v1/clusters/recompute', {
+          method: 'POST'
+        });
+        if (!res.ok) throw new Error('API request failed');
+        const data = await res.json();
+        setSuccessMsg(data.message || 'DBSCAN spatial clustering completed!');
+      } else if (actionType === 'generate_routes') {
+        const res = await fetch('http://localhost:8000/api/v1/routes/optimize', {
+          method: 'POST'
+        });
+        if (!res.ok) throw new Error('API request failed');
+        const data = await res.json();
+        setSuccessMsg(data.message || 'Vehicle Routing Problem (VRP) solver generated optimal pickup routes!');
+      }
+    } catch (err) {
+      console.error(err);
+      setSuccessMsg('Error: Could not connect to backend server. Make sure it is running on port 8000.');
+    } finally {
+      setLoading(false);
       setTimeout(() => {
         if (onSuccess) onSuccess();
         onClose();
-      }, 1400);
-    }, 800);
+      }, 1800);
+    }
   };
 
   return (
@@ -127,15 +200,17 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
                   <label className="block font-semibold text-gray-700 mb-1">
                     Village / District
                   </label>
-                  <input
-                    type="text"
-                    required
+                  <select
                     value={formData.village}
                     onChange={(e) =>
                       setFormData({ ...formData, village: e.target.value })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
-                  />
+                  >
+                    {Object.keys(PUNJAB_LOCATIONS).map((loc) => (
+                      <option key={loc} value={loc}>{loc}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

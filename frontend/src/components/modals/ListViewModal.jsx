@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Building2,
@@ -12,12 +12,26 @@ import {
 } from 'lucide-react';
 import {
   recentActivities,
-  routesData,
-  buyersData,
   clustersData
 } from '../../data/mockData';
 
 export default function ListViewModal({ type, onClose, onSelectCluster }) {
+  const [routes, setRoutes] = useState([]);
+  const [buyers, setBuyers] = useState([]);
+
+  useEffect(() => {
+    if (type === 'routes') {
+      fetch('http://localhost:8000/api/v1/routes')
+        .then(res => res.json())
+        .then(data => { if(data.status === 'success') setRoutes(data.data); });
+    }
+    if (type === 'buyers') {
+      fetch('http://localhost:8000/api/v1/buyers')
+        .then(res => res.json())
+        .then(data => { if(data.status === 'success') setBuyers(data.data); });
+    }
+  }, [type]);
+
   if (!type) return null;
 
   return (
@@ -71,7 +85,7 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
 
           {type === 'routes' && (
             <div className="space-y-3">
-              {routesData.map((route) => (
+              {routes.map((route) => (
                 <div key={route.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80 flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
@@ -96,7 +110,7 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
 
           {type === 'buyers' && (
             <div className="space-y-3">
-              {buyersData.map((b) => (
+              {buyers.map((b) => (
                 <div key={b.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80">
                   <div className="flex items-center justify-between mb-2">
                     <div>

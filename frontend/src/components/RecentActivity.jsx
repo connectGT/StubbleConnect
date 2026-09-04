@@ -1,30 +1,43 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   UserCheck,
   Share2,
   Route,
   ArrowRight,
-  Clock
+  Clock,
+  Wheat
 } from 'lucide-react';
-import { recentActivities } from '../data/mockData';
 
 const iconMap = {
-  UserCheck: UserCheck,
-  Share2: Share2,
-  Route: Route,
+  field_registered: Wheat,
+  cluster_matched: Share2,
+  route_generated: Route,
+  default: UserCheck
 };
 
 export default function RecentActivity({ onViewAll }) {
+  const [activities, setActivities] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/v1/analytics/activity-feed')
+      .then(res => res.json())
+      .then(data => setActivities(data))
+      .catch(err => console.error(err));
+  }, []);
+
   return (
     <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-xs flex flex-col justify-between h-full">
       <div>
-        <h3 className="text-sm font-bold text-gray-900 tracking-tight mb-3">
-          Recent Activity
+        <h3 className="text-sm font-bold text-gray-900 tracking-tight mb-3 flex items-center justify-between">
+          <span>Live Activity Feed</span>
+          <div className="flex items-center gap-1 text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> LIVE
+          </div>
         </h3>
 
         <div className="space-y-3">
-          {recentActivities.map((act) => {
-            const Icon = iconMap[act.icon] || UserCheck;
+          {activities.map((act) => {
+            const Icon = iconMap[act.type] || iconMap.default;
             return (
               <div key={act.id} className="flex items-start justify-between gap-2 text-xs">
                 <div className="flex items-start gap-2.5 min-w-0">

@@ -22,10 +22,8 @@ import {
   Check
 } from 'lucide-react';
 import {
-  clustersData,
   buyersData,
-  routesData,
-  registeredFields
+  routesData
 } from '../data/mockData';
 
 // Helper component to center map when cluster changes
@@ -41,11 +39,79 @@ function MapViewController({ center, zoom }) {
   return null;
 }
 
-export default function BiomassMap({
-  selectedCluster,
-  setSelectedCluster,
-  onOpenBuyerDetails
-}) {
+export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpenBuyerDetails }) {
+  const [mapZoom, setMapZoom] = useState(9);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [showFields, setShowFields] = useState(true);
+  const [showClusters, setShowClusters] = useState(true);
+  const [showBuyers, setShowBuyers] = useState(true);
+  const [showRoutes, setShowRoutes] = useState(true);
+
+  // Live Data States
+  const [localClusters, setLocalClusters] = useState([]);
+  const [localFields, setLocalFields] = useState([]);
+  const [localBuyers, setLocalBuyers] = useState([]);
+  const [localRoutes, setLocalRoutes] = useState([]);
+  const [liveTrucks, setLiveTrucks] = useState({});
+
+  useEffect(() => {
+    // Fetch Clusters
+    fetch('http://localhost:8000/api/v1/clusters')
+      .then(res => res.json())
+      .then(data => {
+        if(data.status === 'success') {
+          const coloredData = data.data.map((cl, i) => ({
+            ...cl,
+            color: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899'][i % 5],
+            borderColor: ['#059669', '#d97706', '#2563eb', '#7c3aed', '#db2777'][i % 5]
+          }));
+          setLocalClusters(coloredData);
+        }
+      })
+      .catch(console.error);
+
+    // Fetch Fields
+    fetch('http://localhost:8000/api/v1/fields')
+      .then(res => res.json())
+      .then(data => {
+        if(data.status === 'success') setLocalFields(data.data);
+      })
+      .catch(console.error);
+
+    // Fetch Buyers
+    fetch('http://localhost:8000/api/v1/buyers')
+      .then(res => res.json())
+      .then(data => {
+        if(data.status === 'success') setLocalBuyers(data.data);
+      })
+      .catch(console.error);
+
+    // Fetch Routes
+    fetch('http://localhost:8000/api/v1/routes')
+      .then(res => res.json())
+      .then(data => {
+        if(data.status === 'success') setLocalRoutes(data.data);
+      })
+      .catch(console.error);
+      
+    // WebSocket for Live Tracking
+    const ws = new WebSocket('ws://localhost:8000/api/v1/ws/tracking');
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'TRUCK_UPDATE') {
+        setLiveTrucks(prev => ({
+          ...prev,
+          [message.data.truck_id]: message.data
+        }));
+      }
+    };
+    
+    return () => ws.close();
+  }, []);
+
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+  };
   const [mapType, setMapType] = useState('satellite'); // 'satellite' | 'street' | 'terrain'
   const [showDropdown, setShowDropdown] = useState(false);
   const [showLayersModal, setShowLayersModal] = useState(false);
@@ -392,7 +458,7 @@ export default function BiomassMap({
 
         {/* Cluster Polygons and Center Badges */}
         {layerVisibility.clusters &&
-          clustersData.map((cl) => {
+          localClusters.map((cl) => {
             const isSelected = selectedCluster?.id === cl.id;
             return (
               <React.Fragment key={cl.id}>
@@ -441,7 +507,7 @@ export default function BiomassMap({
 
         {/* Planned Logistics Routes (Dashed Lines) */}
         {layerVisibility.routes &&
-          routesData.map((rt) => (
+          localRoutes.map((rt) => (
             <Polyline
               key={rt.id}
               positions={rt.path}
@@ -468,7 +534,7 @@ export default function BiomassMap({
 
         {/* Registered Farm Fields */}
         {layerVisibility.fields &&
-          registeredFields.map((f) => (
+          localFields.map((f) => (
             <Marker key={f.id} position={f.coords} icon={createFieldIcon()}>
               <Tooltip direction="top" offset={[0, -5]}>
                 <div className="text-xs font-sans">
@@ -484,7 +550,7 @@ export default function BiomassMap({
 
         {/* Biomass Buyers (Red Factories) */}
         {layerVisibility.buyers &&
-          buyersData.map((b) => (
+          localBuyers.map((b) => (
             <Marker
               key={b.id}
               position={b.coords}
@@ -504,6 +570,38 @@ export default function BiomassMap({
               </Tooltip>
             </Marker>
           ))}
+          
+        {/* Live Truck Tracking */}
+        {Object.values(liveTrucks).map((truck) => (
+          <Marker
+            key={truck.truck_id}
+            position={truck.position}
+            icon={L.divIcon({
+              className: 'custom-truck-icon',
+              html: `
+                <div style="
+                  background-color: #3b82f6;
+                  padding: 4px;
+                  border-radius: 50%;
+                  border: 2px solid white;
+                  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  transform: rotate(${truck.heading}deg);
+                ">
+                  🚚
+                </div>
+              `,
+              iconSize: [28, 28],
+              iconAnchor: [14, 14],
+            })}
+          >
+            <Tooltip direction="top">
+              <span className="font-bold text-blue-700">{truck.truck_id}</span> - En route
+            </Tooltip>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );

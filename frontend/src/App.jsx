@@ -7,6 +7,7 @@ import BottomRow from './components/BottomRow';
 import ClusterModal from './components/modals/ClusterModal';
 import QuickActionModal from './components/modals/QuickActionModal';
 import ListViewModal from './components/modals/ListViewModal';
+import FarmerDashboard from './components/FarmerDashboard';
 import { statsData, clustersData, buyersData, routesData } from './data/mockData';
 
 export default function App() {
@@ -19,6 +20,27 @@ export default function App() {
   // Selected Cluster (Defaults to Cluster #12 from reference image)
   const defaultCluster = clustersData.find((c) => c.number === 12) || clustersData[0];
   const [selectedCluster, setSelectedCluster] = useState(defaultCluster);
+
+  // Live Stats State
+  const [stats, setStats] = useState(statsData);
+
+  React.useEffect(() => {
+    // Fetch live dashboard KPIs from FastAPI
+    fetch('http://localhost:8000/api/v1/analytics/dashboard-kpi')
+      .then(res => res.json())
+      .then(data => {
+        // Map backend keys to frontend keys
+        setStats([
+          { id: 'total_fields', title: 'Total Registered Fields', value: data.total_fields.toString(), subtext: '+12% from last week', trend: 'up' },
+          { id: 'total_biomass', title: 'Est. Biomass Available', value: data.total_biomass_tonnes + ' T', subtext: 'Ready for harvest', trend: 'up' },
+          { id: 'active_clusters', title: 'Active Field Clusters', value: data.active_clusters.toString(), subtext: `${data.matched_clusters} matched with buyers`, trend: 'up' },
+          { id: 'routes_planned', title: 'Logistics Routes Planned', value: data.routes_planned.toString(), subtext: 'Pending dispatch', trend: 'down' },
+          { id: 'high_risk_areas', title: 'High Risk Areas', value: data.high_risk_areas.toString(), subtext: 'Immediate action required', trend: 'down' },
+          { id: 'daily_capacity', title: 'Daily Buyer Capacity', value: '1,200 T', subtext: 'Across 4 active plants', trend: 'up' } // Harcoded capacity for now
+        ]);
+      })
+      .catch(err => console.error("Could not fetch live stats:", err));
+  }, []);
 
   // Modal States
   const [activeQuickAction, setActiveQuickAction] = useState(null);
@@ -84,50 +106,56 @@ export default function App() {
 
         {/* Dashboard Main Content Area */}
         <main className="flex-1 p-4 lg:p-6 space-y-4 max-w-[1720px] w-full mx-auto">
-          {/* Top Row: 6 KPI Stats Cards */}
-          <StatsRow
-            stats={statsData}
-            onSelectRiskMap={() => setListViewModalType('risk')}
-            onCardClick={(statId) => {
-              if (statId === 'routes_planned') setListViewModalType('routes');
-              if (statId === 'active_clusters' || statId === 'matched_clusters') {
-                setIsClusterModalOpen(true);
-              }
-            }}
-          />
+          {userRole === 'admin' ? (
+            <>
+              {/* Top Row: 6 KPI Stats Cards */}
+              <StatsRow
+                stats={stats}
+                onSelectRiskMap={() => setListViewModalType('risk')}
+                onCardClick={(statId) => {
+                  if (statId === 'routes_planned') setListViewModalType('routes');
+                  if (statId === 'active_clusters' || statId === 'matched_clusters') {
+                    setIsClusterModalOpen(true);
+                  }
+                }}
+              />
 
-          {/* Middle Row: 12-Column Grid (9 Col Map + 3 Col Cluster #12 Details Panel) */}
-          <MapSection
-            selectedCluster={selectedCluster}
-            setSelectedCluster={(cl) => {
-              setSelectedCluster(cl);
-              showToast(`Focused on ${cl.name}`);
-            }}
-            onViewFullClusterDetails={(cl) => {
-              setSelectedCluster(cl);
-              setIsClusterModalOpen(true);
-            }}
-            onOpenBuyerDetails={(buyer) => {
-              setListViewModalType('buyers');
-            }}
-          />
+              {/* Middle Row: 12-Column Grid (9 Col Map + 3 Col Cluster #12 Details Panel) */}
+              <MapSection
+                selectedCluster={selectedCluster}
+                setSelectedCluster={(cl) => {
+                  setSelectedCluster(cl);
+                  showToast(`Focused on ${cl.name}`);
+                }}
+                onViewFullClusterDetails={(cl) => {
+                  setSelectedCluster(cl);
+                  setIsClusterModalOpen(true);
+                }}
+                onOpenBuyerDetails={(buyer) => {
+                  setListViewModalType('buyers');
+                }}
+              />
 
-          {/* Bottom Row: 3 Equal-Width Panels (Recent Activity, Planned Routes, Top Buyers) */}
-          <BottomRow
-            onViewAllActivity={() => setListViewModalType('activity')}
-            onViewAllRoutes={() => setListViewModalType('routes')}
-            onViewAllBuyers={() => setListViewModalType('buyers')}
-            onSelectRoute={(route) => {
-              const matchedCl = clustersData.find(
-                (c) => c.name.toLowerCase() === route.cluster.toLowerCase()
-              );
-              if (matchedCl) setSelectedCluster(matchedCl);
-              showToast(`Inspecting ${route.code} -> ${route.buyer}`);
-            }}
-            onSelectBuyer={(buyer) => {
-              showToast(`Offtaker: ${buyer.name} (${buyer.currentCapacity}/${buyer.maxCapacity} T)`);
-            }}
-          />
+              {/* Bottom Row: 3 Equal-Width Panels (Recent Activity, Planned Routes, Top Buyers) */}
+              <BottomRow
+                onViewAllActivity={() => setListViewModalType('activity')}
+                onViewAllRoutes={() => setListViewModalType('routes')}
+                onViewAllBuyers={() => setListViewModalType('buyers')}
+                onSelectRoute={(route) => {
+                  const matchedCl = clustersData.find(
+                    (c) => c.name.toLowerCase() === route.cluster.toLowerCase()
+                  );
+                  if (matchedCl) setSelectedCluster(matchedCl);
+                  showToast(`Inspecting ${route.code} -> ${route.buyer}`);
+                }}
+                onSelectBuyer={(buyer) => {
+                  showToast(`Offtaker: ${buyer.name} (${buyer.currentCapacity}/${buyer.maxCapacity} T)`);
+                }}
+              />
+            </>
+          ) : (
+            <FarmerDashboard onRegisterClick={() => setActiveQuickAction('register_field')} />
+          )}
         </main>
       </div>
 

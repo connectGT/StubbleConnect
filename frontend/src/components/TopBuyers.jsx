@@ -1,12 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Building2,
   ArrowRight,
   Factory
 } from 'lucide-react';
-import { buyersData } from '../data/mockData';
 
 export default function TopBuyers({ onViewAll, onSelectBuyer }) {
+  const [buyers, setBuyers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/v1/buyers')
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          setBuyers(data.data);
+        }
+        setLoading(false);
+      })
+      .catch(e => {
+        console.error(e);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div className="p-4 text-gray-500">Loading buyers...</div>;
+
   return (
     <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-xs flex flex-col justify-between h-full">
       <div>
@@ -15,7 +34,7 @@ export default function TopBuyers({ onViewAll, onSelectBuyer }) {
         </h3>
 
         <div className="space-y-3.5">
-          {buyersData.map((buyer) => {
+          {buyers.map((buyer) => {
             const percentage = Math.round(
               (buyer.currentCapacity / buyer.maxCapacity) * 100
             );

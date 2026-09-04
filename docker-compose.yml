@@ -1,4 +1,15 @@
 services:
+  db:
+    image: postgis/postgis:15-3.3
+    environment:
+      POSTGRES_USER: stubble_user
+      POSTGRES_PASSWORD: stubble_password
+      POSTGRES_DB: stubble_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+
   frontend:
     build:
       context: ./frontend
@@ -18,3 +29,9 @@ services:
       - "8000:8000"
     environment:
       - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://stubble_user:stubble_password@db:5432/stubble_db
+    depends_on:
+      - db
+
+volumes:
+  postgis_data:

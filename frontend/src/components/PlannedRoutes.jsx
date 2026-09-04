@@ -1,13 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Truck,
   Building2,
   ArrowRight,
   MapPin
 } from 'lucide-react';
-import { routesData } from '../data/mockData';
 
 export default function PlannedRoutes({ onViewAll, onSelectRoute }) {
+  const [routes, setRoutes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/v1/routes')
+      .then(res => res.json())
+      .then(data => {
+        if(data.status === 'success') {
+          setRoutes(data.data);
+        }
+        setLoading(false);
+      })
+      .catch(e => {
+        console.error(e);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div className="p-4 text-gray-500">Loading routes...</div>;
+
   return (
     <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-xs flex flex-col justify-between h-full">
       <div>
@@ -16,7 +35,7 @@ export default function PlannedRoutes({ onViewAll, onSelectRoute }) {
         </h3>
 
         <div className="space-y-3">
-          {routesData.map((route, idx) => (
+          {routes.map((route, idx) => (
             <div
               key={route.id}
               onClick={() => onSelectRoute && onSelectRoute(route)}
