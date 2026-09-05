@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sprout, IndianRupee, Leaf, MapPin, Truck, CheckCircle2,
-  Calendar, Bell, MessageCircle, Phone, LogOut, ChevronRight,
-  X, Wheat, Plus, TrendingUp, Shield, CheckCircle, Star, PlayCircle
+  Calendar, Bell, MessageCircle, Phone, ChevronRight,
+  X, Wheat, Plus, TrendingUp, Shield, CheckCircle, PlayCircle
 } from 'lucide-react';
 import { Joyride, STATUS } from 'react-joyride';
-import FarmerOnboardingTutorial from './modals/FarmerOnboardingTutorial';
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -143,16 +142,79 @@ function PickupOTPModal({ onClose }) {
   );
 }
 
-function RegisterHarvestModal({ onClose, onSuccess, t }) {
-  const [formData, setFormData] = useState({ field: '', crop: 'Paddy / Basmati', acres: '', harvestDate: '2026-09-06' });
+function RegisterHarvestModal({ farmerUser, onClose, onSuccess, t }) {
+  const [formData, setFormData] = useState({
+    field: 'Farm A — Talwandi Sabo',
+    customVillage: '',
+    crop: 'Paddy / Basmati',
+    acres: '10',
+    harvestDate: '2026-09-06'
+  });
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
-  const fieldAcres = { 'Farm A — Talwandi Sabo': '10', 'Farm B — Rampura Phul': '14', 'Farm C — Goniana': '7' };
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e) => {
+  const fieldLocations = {
+    'Farm A — Talwandi Sabo': { village: 'Talwandi Sabo', acres: '10', lat: 29.988, lng: 75.088 },
+    'Farm B — Rampura Phul': { village: 'Rampura Phul', acres: '14', lat: 30.272, lng: 75.234 },
+    'Farm C — Goniana': { village: 'Goniana', acres: '7', lat: 30.316, lng: 74.901 },
+    'Farm D — Bathinda City': { village: 'Bathinda City', acres: '8', lat: 30.211, lng: 74.945 },
+    'Farm E — Mansa': { village: 'Mansa', acres: '12', lat: 29.989, lng: 75.399 }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => { setLoading(false); setDone(true); setTimeout(() => { onSuccess(); onClose(); }, 1800); }, 1200);
+    setErrorMsg('');
+
+    try {
+      const isCustom = formData.field === 'new';
+      const locInfo = isCustom
+        ? { village: formData.customVillage.trim() || 'Bathinda Area', lat: 30.211, lng: 74.945 }
+        : (fieldLocations[formData.field] || { village: 'Bathinda City', lat: 30.211, lng: 74.945 });
+
+      const rawPhone = (farmerUser?.phone || '9876543210').replace(/[\s-+]/g, '');
+      const normalizedPhone = rawPhone.length > 10 && rawPhone.startsWith('91') ? rawPhone.slice(2) : (rawPhone || '9876543210');
+
+      const finalLat = locInfo.lat + (Math.random() * 0.01 - 0.005);
+      const finalLng = locInfo.lng + (Math.random() * 0.01 - 0.005);
+
+      const payload = {
+        farmer_name: farmerUser?.name || 'Farmer',
+        phone: normalizedPhone,
+        village: locInfo.village,
+        district: farmerUser?.district || 'Bathinda',
+        state: farmerUser?.state || 'Punjab',
+        acres: parseFloat(formData.acres) || 5.0,
+        crop_type: formData.crop || 'Paddy / Basmati',
+        latitude: finalLat,
+        longitude: finalLng,
+        harvest_date: formData.harvestDate,
+        status: 'Pending'
+      };
+
+      const res = await fetch('http://localhost:8000/api/v1/fields/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to register field with backend');
+      }
+
+      setDone(true);
+      window.dispatchEvent(new CustomEvent('refresh-dashboard-data'));
+      setTimeout(() => {
+        if (onSuccess) onSuccess();
+        onClose();
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      setErrorMsg('Could not register field. Please ensure backend server is reachable on port 8000.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputClass = 'w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600';
@@ -167,26 +229,50 @@ function RegisterHarvestModal({ onClose, onSuccess, t }) {
           <button onClick={onClose} className="text-gray-400 hover:text-white cursor-pointer"><X className="w-5 h-5" /></button>
         </div>
         <div className="p-5">
+          {errorMsg && (
+            <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600">
+              {errorMsg}
+            </div>
+          )}
           {done ? (
             <div className="py-6 text-center space-y-3">
               <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
                 <CheckCircle className="w-7 h-7 text-emerald-600" />
               </div>
               <p className="font-bold text-gray-900">Harvest Registered!</p>
-              <p className="text-xs text-gray-500">Your harvest has been logged. We'll assign a pickup slot soon.</p>
+              <p className="text-xs text-gray-500">Your harvest has been saved to the database. We'll assign a pickup slot soon.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
               <div>
                 <label className="block font-semibold text-gray-700 mb-1.5">Select Field</label>
                 <select required value={formData.field}
-                  onChange={e => setFormData({ ...formData, field: e.target.value, acres: fieldAcres[e.target.value] || '' })}
+                  onChange={e => setFormData({
+                    ...formData,
+                    field: e.target.value,
+                    acres: fieldLocations[e.target.value]?.acres || formData.acres
+                  })}
                   className={inputClass}>
                   <option value="">Choose a saved field...</option>
-                  {Object.keys(fieldAcres).map(f => <option key={f} value={f}>{f}</option>)}
+                  {Object.keys(fieldLocations).map(f => <option key={f} value={f}>{f}</option>)}
                   <option value="new">+ Add New Field Location</option>
                 </select>
               </div>
+
+              {formData.field === 'new' && (
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1.5">Custom Village / Field Location</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Sangat Mandi, Bathinda"
+                    value={formData.customVillage}
+                    onChange={e => setFormData({ ...formData, customVillage: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-gray-700 mb-1.5">Crop Type</label>
@@ -226,7 +312,7 @@ function RegisterHarvestModal({ onClose, onSuccess, t }) {
 }
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
-export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick }) {
+export default function FarmerDashboard({ farmerUser, onLogout: _onLogout, onRegisterClick: _onRegisterClick }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedField, setSelectedField] = useState(null);
   const [showPickupOTP, setShowPickupOTP] = useState(false);
@@ -238,7 +324,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
   });
   const [etaMinutes, setEtaMinutes] = useState(47);
   const [toast, setToast] = useState('');
-  const [lang, setLang] = useState('en');
+  const [lang, _setLang] = useState('en');
 
   const dict = {
     en: {
@@ -319,7 +405,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
   const village = farmerUser?.village || 'Punjab';
   const fpoId = farmerUser?.fpoId || farmerUser?.fpo_id || '#88392';
   const tier = farmerUser?.tier || 'Green';
-  const joinedDate = farmerUser?.joinedDate || farmerUser?.joined_date || '—';
+  const _joinedDate = farmerUser?.joinedDate || farmerUser?.joined_date || '—';
   
   const myFields = farmerUser?.fields || [];
   const hasFields = myFields.length > 0;
@@ -335,6 +421,8 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
     emerald: 'bg-emerald-100 text-emerald-700 border-emerald-200',
     amber: 'bg-amber-100 text-amber-800 border-amber-200',
     blue: 'bg-blue-100 text-blue-700 border-blue-200',
+    gray: 'bg-gray-100 text-gray-700 border-gray-200',
+    grey: 'bg-gray-100 text-gray-700 border-gray-200',
   };
 
   return (
@@ -561,7 +649,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
                     <div>
                       <h4 className="font-bold text-gray-900 text-sm">{field.name} — {field.location}</h4>
                       <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
-                        <Calendar className="w-3.5 h-3.5" /> {field.harvestDate || 'Not set'} · {field.acres} Acres · {field.crop_type}
+                        <Calendar className="w-3.5 h-3.5" /> {field.harvest_date || field.harvestDate || 'Not set'} · {field.acres} Acres · {field.crop_type}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0 ml-3">
@@ -702,8 +790,12 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
       {showPickupOTP && <PickupOTPModal onClose={() => setShowPickupOTP(false)} />}
       {showRegisterHarvest && (
         <RegisterHarvestModal
+          farmerUser={farmerUser}
           onClose={() => setShowRegisterHarvest(false)}
-          onSuccess={() => showToast('Harvest registered successfully!')}
+          onSuccess={() => {
+            showToast('Harvest registered successfully!');
+            window.dispatchEvent(new CustomEvent('refresh-dashboard-data'));
+          }}
           t={t}
         />
       )}

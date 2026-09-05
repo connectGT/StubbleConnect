@@ -12,6 +12,7 @@ class FieldRegisterRequest(BaseModel):
     harvest_date: str
     latitude: float
     longitude: float
+    status: Optional[str] = "Pending"
 
 class BuyerRegisterRequest(BaseModel):
     plant_name: str

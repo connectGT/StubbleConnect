@@ -192,22 +192,38 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
               {fields.length === 0 ? (
                 <div className="text-center p-8 text-gray-500 italic">No farm fields registered yet.</div>
               ) : (
-                fields.map((f) => (
-                  <div key={f.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80 flex justify-between items-center">
-                    <div>
-                      <h4 className="font-bold text-sm text-gray-900">{f.farmer_name || f.farmer || 'Farmer'}</h4>
-                      <p className="text-gray-500">Location: {f.village || f.location} &bull; Size: {f.area_acres || f.acres || 0} Acres</p>
-                      <p className="text-emerald-700 font-semibold mt-1">Est. Biomass: {f.biomass || f.biomass_est || 0} Tonnes</p>
+                fields.map((f) => {
+                  const isCompleted = f.status === 'Completed';
+                  return (
+                    <div
+                      key={f.id}
+                      className={`p-4 rounded-xl border flex justify-between items-center transition-all ${
+                        isCompleted
+                          ? 'opacity-60 bg-gray-100/70 border-gray-200'
+                          : 'bg-gray-50 border-gray-200/80'
+                      }`}
+                    >
+                      <div>
+                        <h4 className={`font-bold text-sm ${isCompleted ? 'text-gray-600 line-through' : 'text-gray-900'}`}>
+                          {f.farmer_name || f.farmer || 'Farmer'}
+                        </h4>
+                        <p className="text-gray-500">Location: {f.village || f.location} &bull; Size: {f.area_acres || f.acres || 0} Acres</p>
+                        <p className={`font-semibold mt-1 ${isCompleted ? 'text-gray-500' : 'text-emerald-700'}`}>
+                          Est. Biomass: {f.biomass || f.biomass_est || 0} Tonnes
+                        </p>
+                      </div>
+                      <div>
+                        {isCompleted ? (
+                          <span className="px-2.5 py-1 rounded-full bg-gray-200 text-gray-700 font-bold text-[10px]">Completed</span>
+                        ) : f.is_clustered ? (
+                          <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">Clustered</span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">Pending</span>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      {f.is_clustered ? (
-                         <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">Clustered</span>
-                      ) : (
-                         <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">Pending</span>
-                      )}
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}

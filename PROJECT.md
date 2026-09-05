@@ -1,87 +1,87 @@
-# Project: StubbleConnect — SIH 2026 Biomass Command Center
+# Project: StubbleConnect Fixes & Advanced Logistics Enhancement
 
 ## Architecture
-- **Frontend**: React (Vite, Tailwind CSS, Leaflet/React-Leaflet, Lucide-react)
-  - Portals: Operations Admin (`App.jsx`), Farmer Portal (`FarmerDashboard.jsx`, `FarmerLoginPage.jsx`), Buyer Portal (`BuyerPanelApp.jsx`), Driver Portal (`DriverPanelApp.jsx`)
-  - Navigation: `Sidebar.jsx`, `Header.jsx`, `BottomRow.jsx`, `StatsRow.jsx`
-  - Map & Geo-Visuals: `BiomassMap.jsx`, `MapSection.jsx`, `ClusterDetailsPanel.jsx`
-  - Modals: `ListViewModal.jsx`, `QuickActionModal.jsx`, `ClusterModal.jsx`, `FieldDetailModal.jsx`, `RegisterOnBehalfModal.jsx`
-- **Backend**: FastAPI (Python 3.10+, SQLAlchemy, PostGIS / PostgreSQL, GeoAlchemy2)
-  - Core API endpoints: `/api/v1/farmers`, `/api/v1/fields`, `/api/v1/clusters`, `/api/v1/routes`, `/api/v1/ws`
-  - ML & Optimization Engine:
-    - DBSCAN Spatial Clustering: `backend/app/ml_engine/clustering/dbscan_cluster.py` (Scikit-Learn DBSCAN, Haversine metric, eps=8km, min_samples=3, ConvexHull boundary generation)
-    - Google OR-Tools CVRP Solver: `backend/app/ml_engine/routing/vrp_solver.py` (Capacitated Vehicle Routing Problem, PATH_CHEAPEST_ARC, Guided Local Search, with robust heuristic fallback if ortools is absent)
-    - Multifactored Stubble Burning Risk Model: `backend/app/ml_engine/risk_model/burning_risk.py`
-    - Live WebSocket Fleet Tracking: `backend/app/api/v1/endpoints/websockets.py`
+StubbleConnect is a full-stack platform consisting of:
+- **Backend**: FastAPI with SQLAlchemy, GeoAlchemy2 (PostGIS), Scikit-Learn (DBSCAN), and WebSocket live tracking.
+- **Frontend**: React (Vite, Tailwind CSS, Lucide icons, Leaflet / React-Leaflet).
+- **Data Flow**:
+  - Farmers register fields through the Farmer Portal or Admin Quick Actions -> saved to PostGIS `fields` table.
+  - ML Engine groups active fields into regional clusters via DBSCAN ($eps=8\text{km}, min\_samples=3$) and creates ConvexHull bounding polygons. Completed fields are strictly excluded.
+  - Offtaker Buyers (Biogas Plants) and Private Association Hubs (FPO aggregation depots) serve as logistics dispatch origins.
+  - WebSocket Simulation Service runs dynamic truck cycles (`Origin -> Field -> Origin`), dynamically marks fields as `Completed` upon collection, and broadcasts real-time GPS telemetry and collection events.
+  - Dynamic Risk Scoring computes burning risk $R(\Delta) \in [5, 100]$ based solely on days elapsed relative to `harvest_date`, with $R = 0$ for completed fields.
 
 ---
 
 ## Feature Inventory
-Every feature identified during the Survey phase is mapped below:
-
-| # | Feature | Description | Milestone | Status | Source |
-|---|---|---|---|---|---|
-| 1 | Fix `Cpu` icon import crash | Import `Cpu` from `lucide-react` in `ListViewModal.jsx` to prevent crash on "AI Config" click | M1 | DONE | explorer_ui / explorer_workflow |
-| 2 | Wire Route Polyline Map Clicks | Add `eventHandlers` with `onClick` to `BiomassMap.jsx` routes so clicking a route line inspects logistics details | M1 | DONE | explorer_ui |
-| 3 | Populate Map Hover Cards | Ensure hover cards on fields, clusters, and routes render complete data and actions | M1 | DONE | explorer_ui / ORIGINAL_REQUEST |
-| 4 | Cluster Details Empty State | Render formatted placeholder prompt card in `ClusterDetailsPanel.jsx` when `selectedCluster === null` | M1 | DONE | explorer_ui |
-| 5 | Cluster Details Live Data Fallbacks | Fall back missing backend fields (`harvestWindow`, `avgDistance`, `status`) to sensible defaults | M1 | DONE | explorer_ui |
-| 6 | Wire Dead KPI Cards in StatsRow | Wire all 6 cards (`total_fields`, `total_biomass`, `active_clusters`, `routes_planned`, `high_risk`, `daily_capacity`) to their respective `ListViewModal` types | M1 | DONE | explorer_ui |
-| 7 | Wire Farmer Sidebar Subitems | Pass `activeTab` and tab change handler to `FarmerDashboard` so sidebar subtabs switch tabs or open modals | M1 | DONE | explorer_ui |
-| 8 | Wire Farmer Dashboard Dead Buttons | Connect `onRegisterClick`, `onLogout`, `My Tier` benefits popup, and remove crude `alert()` | M1 | DONE | explorer_ui |
-| 9 | Farmer Login Trap Resolution | Add "Return to Command Center" exit button on `FarmerLoginPage` calling `setUserRole('admin')` | M1 | DONE | explorer_ui |
-| 10 | Connect Header Global Search | Pass `searchTerm` into `MapSection` and `BottomRow` to filter cards, clusters, and tables | M1 | DONE | explorer_ui |
-| 11 | Fix `QuickActionModal` "+ Add New Field" | Fix `coords.lat` crash when `village === 'new'` by providing default coordinates and custom name input | M1 | DONE | explorer_ui / explorer_workflow |
-| 12 | Wire ListViewModal "Plan Route" & "Inspect Map" | Add functional `onClick` handlers to buttons inside the clusters view of `ListViewModal` | M1 | DONE | explorer_ui |
-| 13 | Resolve Schema Mismatches in ListViewModal | Support both `farmsCount`/`farms_count`, `totalBiomass`/`total_biomass`, `farmer`/`farmer_name` | M1 | DONE | explorer_ui / explorer_workflow |
-| 14 | Add Table & Panel Empty States | Add empty state cards to `RecentActivity`, `PlannedRoutes`, `TopBuyers`, and `ListViewModal` tables | M1 | DONE | explorer_ui |
-| 15 | Portal Navigation Switcher | Add switcher or menu links in Header/Sidebar to access Buyer and Driver portals | M1 | DONE | explorer_ui / explorer_workflow |
-| 16 | OR-Tools VRP Graceful Fallback | Add robust heuristic fallback in `vrp_solver.py` when `ortools` package is not present in environment | M2 | DONE | explorer_workflow |
-| 17 | Fix Cluster Geometry Null IndexError | Fix `coord[1]` on `[]` in `clusters.py` when cluster polygon geometry is null | M2 | DONE | explorer_workflow |
-| 18 | Fix ConvexHull Collinearity Crash | Catch `QhullError` in `clusters.py` when points are collinear and fall back to bounding box | M2 | DONE | explorer_workflow |
-| 19 | Fix WebSocket Truck Sim Async Crash | Add `try/except` in `manager.broadcast()` to prevent disconnected client from crashing GPS tracking | M2 | DONE | explorer_workflow |
-| 20 | Connect Farmer Harvest Declaration to API | Replace mock `setTimeout` in `FarmerDashboard.jsx` with actual `fetch` to `/api/v1/fields/register` | M2 | DONE | explorer_workflow |
-| 21 | Normalize Seed Phone & Farmer Record | Ensure seeded test fields match the 10-digit login format and seed a matching Farmer record | M2 | DONE | explorer_workflow |
-| 22 | Google OR-Tools Vehicle Capacity Fix | Ensure vehicle capacity parameter accommodates cluster biomass volume so CVRP routes generate | M2 | DONE | explorer_algo_pitch |
-| 23 | SIH Pitch Guide Creation | Create `SIH_PITCH_GUIDE.md` in root with step-by-step click actions, talking points, and fail-safe demo | M3 | DONE | explorer_algo_pitch / ORIGINAL_REQUEST |
-| 24 | DBSCAN Clustering Presentation Steps | Detail exact parameters (eps=8km, min_samples=3), click triggers, and visual validation points | M3 | DONE | explorer_algo_pitch / ORIGINAL_REQUEST |
-| 25 | Google OR-Tools Presentation Steps | Detail exact VRP inputs, optimization trigger, fleet assignment, and route visualization steps | M3 | DONE | explorer_algo_pitch / ORIGINAL_REQUEST |
-| 26 | Live Insertion Fail-Safe Demo | Detail exact steps to register a new field near Bathinda and demonstrate dynamic cluster absorption | M3 | DONE | explorer_algo_pitch / ORIGINAL_REQUEST |
-| 27 | End-to-End Acceptance & Forensic Audit | Verify all acceptance criteria with Reviewers, Challengers, and Forensic Auditor | M4 | DONE | All / ORIGINAL_REQUEST |
+| # | Feature | Description | Milestone | Source |
+|---|---------|-------------|-----------|--------|
+| 1 | R1: Farmer Name Input in Field Registration | Add Farmer Name and Phone input fields to QuickActionModal; prefill from logged-in user if available; prevent fallback to hardcoded "Farmer". | M1 | Survey 1 |
+| 2 | R1: Farmer Registration Backend Endpoint Fixes | Ensure `POST /api/v1/fields/register` normalizes phone numbers and correctly saves provided `farmer_name` and `phone`. | M1 | Survey 1 |
+| 3 | R1: Admin Panel Fields List Farmer Name Display | `ListViewModal.jsx` and `BiomassMap.jsx` display actual `farmer_name` rather than "Farmer". | M1 | Survey 1 |
+| 4 | R1: Farmer Dashboard "My Fields" Auto-Sync | Wire `RegisterHarvestModal` to call backend registration API, emit `refresh-dashboard-data`, and reload farmer profile so new fields immediately appear in "My Fields". | M1 | Survey 1 |
+| 5 | R1: Farmer Dashboard Harvest Date Display Fix | Fix field attribute reference in `FarmerDashboard.jsx` (`field.harvest_date || field.harvestDate`) so valid harvest dates render instead of "Not set". | M1 | Survey 1 |
+| 6 | R2: Field Status Schema Addition | Add `status = Column(String, default="Pending")` to `Field` model in `models.py` and schemas in `schemas.py`. | M1 | Survey 1 & 2 |
+| 7 | R2: Seed Completed Fields at Startup | Seed 2-3 fields with `status="Completed"` at startup in `seed.py` (including Gurmit Singh's past field and regional fields). | M1 | Survey 1 & 2 |
+| 8 | R2: Admin Panel Greyed-out Rendering | Render completed fields as greyed-out (`opacity-60`, grey badge, grey circular pin `#94a3b8`) in `ListViewModal.jsx` and `BiomassMap.jsx`. | M1 | Survey 1 & 2 |
+| 9 | R5: Mathematical Dynamic Risk Scoring Formula | Implement calibrated sigmoidal logistic growth formula $R(\Delta) = \min(100, \max(5, \text{round}(100 / (1 + e^{-0.35 \cdot \Delta}))))$ based solely on days since `harvest_date` (and 0 for Completed fields) in `burning_risk.py`. | M2 | Survey 3 |
+| 10 | R5: Field & Cluster Dynamic Risk Integration | Include dynamic risk score in `GET /api/v1/fields/` and aggregate average active risk score in `clusters.py`. | M2 | Survey 3 |
+| 11 | R3: Increase Biogas Plants (Buyers) Count | Expand Biogas Plants / Offtakers to 6 facilities across Punjab in backend `seed.py` and frontend `mockData.js`. | M2 | Survey 2 |
+| 12 | R3: Place Plants Outside Farm Cluster Polygons | Adjust plant coordinates to industrial zones/bypasses located strictly outside the cluster convex hull bounding polygons. | M2 | Survey 2 |
+| 13 | R3: Generate 4-5 More Farm Cluster Polygons | Seed 5-6 geographically separated farm groups across Punjab (>15 km apart) so DBSCAN forms 5-6 distinct clusters and ConvexHull polygons. | M2 | Survey 2 |
+| 14 | R2: Exclude Completed Fields from ML Clustering | Update `clusters.py:recompute_clusters` to query only active fields (`Field.status != "Completed"`), leaving completed fields unclustered. | M2 | Survey 1 & 2 |
+| 15 | R4: Mixed Logistics Hub Model | Establish fleet origins: 50% from Biogas Plants and 50% from Private Association Hubs (FPO depots). | M3 | Survey 3 |
+| 16 | R4: Dynamic Full-Cycle Waypoint Generation | Generate outbound and inbound waypoints for trucks: `Origin (Hub/Plant) -> Target Field -> Origin (Hub/Plant)`. | M3 | Survey 3 |
+| 17 | R4: Collection Trigger & State Transition | When a truck reaches a field, transition field `status` to `"Completed"` in DB, update truck load, and broadcast `FIELD_COLLECTED` WebSocket event. | M3 | Survey 3 |
+| 18 | R4: Map Animation & WebSocket Ingestion | Fix `truckPaths` parsing bug in `BiomassMap.jsx`, handle `FIELD_COLLECTED` in real time, apply smooth CSS glide transitions, and render distinct icons for Hubs vs Plants. | M3 | Survey 3 |
+| 19 | R1-R5: Full Integration & Verification | Run end-to-end regression tests, API checks, and UI acceptance criteria verification. | M3 | Survey 1, 2, 3 |
 
 ---
 
 ## Milestones
-
 | # | Name | Scope | Dependencies | Status |
-|---|---|---|---|---|
-| M1 | Wire Dead UI Panels & Components | Features #1 to #15 (Sidebar, Map, Hover cards, Dashboards, Headers, Modals, Empty States) | Phase 0 Survey | DONE |
-| M2 | Backend Workflow & Crash Resilience | Features #16 to #22 (VRP solver fallback, cluster geometry fixes, websocket resilience, harvest API connection, seed normalization) | Phase 0 Survey | DONE |
-| M3 | SIH Pitch Guide (`SIH_PITCH_GUIDE.md`) | Features #23 to #26 (Comprehensive guide with DBSCAN, OR-Tools, and fail-safe demo) | Phase 0 Survey | DONE |
-| M4 | Final E2E Verification & Forensic Audit | Feature #27 (Dual-track testing, Reviewers, Challengers, Forensic Auditor) | M1, M2, M3 | DONE |
+|---|------|-------|-------------|--------|
+| M1 | Core Data Models, Field States & Data Sync | Features 1, 2, 3, 4, 5, 6, 7, 8 (R1 & R2) | None | IN_PROGRESS |
+| M2 | Biogas Plants, Multi-Cluster Polygons & Dynamic Risk | Features 9, 10, 11, 12, 13, 14 (R3, R2 exclusion, R5) | M1 | PLANNED |
+| M3 | Dynamic Truck Logistics & Mixed Hub Simulation | Features 15, 16, 17, 18, 19 (R4, integration & verification) | M1, M2 | PLANNED |
 
 ---
 
 ## Interface Contracts
 
-### Frontend ↔ Backend Endpoints
-- `GET /api/v1/clusters`: Returns cluster array. Expected fields: `{ id, number, name, risk_level, riskScore, farmsCount, totalBiomass, center, polygon, status, harvestWindow, nearestBuyer }`.
-- `POST /api/v1/clusters/recompute`: Recomputes DBSCAN clusters.
-- `POST /api/v1/routes/optimize`: Runs VRP optimization. Input: `{ cluster_id, depot_lat, depot_lng, vehicle_capacity }`. Output: array of route objects with `id, code, buyer, buyerLocation, stops, tonnage, path`.
-- `POST /api/v1/fields/register`: Registers a new field. Input: `{ farmer_name, phone, village, district, state, acres, crop_type, harvest_date, biomass, latitude, longitude }`.
+### M1 ↔ M2 Contract
+- `Field.status`: string column with possible values `"Pending"`, `"Clustered"`, `"Completed"`.
+- `GET /api/v1/fields/`: returns list of dicts with keys: `id`, `farmer_name`, `farmer`, `village`, `acres`, `biomass`, `coords: [lat, lng]`, `cluster`, `harvest_date`, `status`, `risk_score`.
+- `POST /api/v1/fields/register`: accepts `farmer_name`, `phone`, `village`, `district`, `state`, `acres`, `crop_type`, `latitude`, `longitude`, `harvest_date`, `status` (optional, default `"Pending"`).
+
+### M2 ↔ M3 Contract
+- `clusters.py:recompute_clusters`: only clusters active fields (`status != "Completed"`).
+- `buyers` table & `mockData.js`: contains both facility types:
+  - `"Biogas Plant"` / `"Bio-CNG Facility"` (Commercial offtakers)
+  - `"Private Association Hub"` / `"FPO Aggregation Hub"` (Farmer producer organizations)
+- All plant/hub coordinates are outside farm cluster polygons.
+
+### M3 WebSocket Contract
+- `ws://localhost:8000/api/v1/ws/tracking` broadcasts:
+  - `type: "TRUCK_UPDATE"`: `{ truck_id, current_coords: [lat, lng], status, tonnage, origin, origin_type, destination, progress }`
+  - `type: "FIELD_COLLECTED"`: `{ field_id, truck_id, timestamp, new_status: "Completed" }`
+- Endpoint `POST /api/v1/fields/{field_id}/complete` updates database status to `"Completed"`.
 
 ---
 
 ## Code Layout
-- Frontend: `c:\Users\gurut\OneDrive\Desktop\sih\frontend\`
-  - Source: `frontend/src/`
-  - Components: `frontend/src/components/`
-  - Modals: `frontend/src/components/modals/`
-  - Portals: `frontend/src/buyer_panel/`, `frontend/src/driver_panel/`
-- Backend: `c:\Users\gurut\OneDrive\Desktop\sih\backend\`
-  - App: `backend/app/`
-  - API Routes: `backend/app/api/v1/endpoints/`
-  - ML Engine: `backend/app/ml_engine/`
-  - Database Models: `backend/app/db/`
-- Documentation / Pitch:
-  - `c:\Users\gurut\OneDrive\Desktop\sih\SIH_PITCH_GUIDE.md`
+- `backend/app/db/models.py`: Database models (`Field`, `Buyer`, `Cluster`, etc.)
+- `backend/app/schemas/schemas.py`: Pydantic request/response validation
+- `backend/app/api/v1/endpoints/fields.py`: Field registration and retrieval endpoints
+- `backend/app/api/v1/endpoints/farmers.py`: Farmer profile and owned fields
+- `backend/app/api/v1/endpoints/seed.py`: Startup database seeding (fields, buyers, clusters)
+- `backend/app/api/v1/endpoints/clusters.py`: DBSCAN clustering and convex hull polygons
+- `backend/app/ml_engine/risk_model/burning_risk.py`: Dynamic mathematical risk formula
+- `backend/app/api/v1/endpoints/websockets.py`: Background truck simulation & WebSocket broadcasting
+- `backend/app/api/v1/endpoints/trucks.py`: Truck path REST API
+- `frontend/src/components/modals/QuickActionModal.jsx`: Registration modal with farmer name inputs
+- `frontend/src/components/modals/ListViewModal.jsx`: Admin list view with greyed-out completed fields
+- `frontend/src/components/FarmerDashboard.jsx`: Farmer portal with "My Fields" and real harvest reporting
+- `frontend/src/components/BiomassMap.jsx`: Leaflet map with animated trucks, distinct hubs/plants, grey pins
+- `frontend/src/data/mockData.js`: Frontend fallback and coordinate configurations
+- `backend/tests/`: Automated unit and integration test suite

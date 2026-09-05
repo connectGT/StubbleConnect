@@ -94,9 +94,7 @@ export default function Sidebar({
         <div className="p-5 pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
-                <Sprout className="w-5 h-5 text-emerald-400" />
-              </div>
+              <img src="/logo.jpg" alt="StubbleConnect Logo" className="w-9 h-9 rounded-lg object-cover border border-emerald-500/30 shadow-inner" />
               <div>
                 <h1 className="text-white font-bold text-lg tracking-tight leading-none">
                   Stubble<span className="text-emerald-400">Connect</span>

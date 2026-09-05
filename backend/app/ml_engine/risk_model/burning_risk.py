@@ -53,6 +53,30 @@ def calculate_burning_risk_score(
         "recommended_action": action
     }
 
+def calculate_dynamic_burning_risk(harvest_date_str: str, status: str = "Pending", ref_today: datetime.date = None) -> int:
+    """
+    Computes dynamic stubble burning risk (0-100) based solely on days elapsed relative to harvest_date.
+    R(Delta) = 0 if status == 'Completed' else min(100, max(5, round(100 / (1 + exp(-0.35 * Delta)))))
+    where Delta = (today - harvest_date).days
+    """
+    if status == "Completed":
+        return 0
+    if not harvest_date_str:
+        return 5
+    if ref_today is None:
+        from datetime import date
+        ref_today = date.today()
+    try:
+        hd = datetime.strptime(str(harvest_date_str)[:10], "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return 5
+    delta = (ref_today - hd).days
+    score = int(round(100.0 / (1.0 + math.exp(-0.35 * delta))))
+    return min(100, max(5, score))
+
+calculate_burning_risk_by_date = calculate_dynamic_burning_risk
+calculate_harvest_risk_score = calculate_dynamic_burning_risk
+
 if __name__ == "__main__":
     result = calculate_burning_risk_score(
         hours_to_wheat_sowing_deadline=36,
@@ -62,3 +86,4 @@ if __name__ == "__main__":
         is_route_assigned=True
     )
     print(f"Computed Risk: {result}")
+

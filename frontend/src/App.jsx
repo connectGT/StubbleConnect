@@ -22,19 +22,30 @@ export default function App() {
     } catch { return null; }
   });
 
-  // Re-verify and fetch fresh data from backend on boot
+  // Re-verify and fetch fresh data from backend on boot and on refresh-dashboard-data
   useEffect(() => {
-    if (farmerUser?.phone) {
-      fetch(`http://localhost:8000/api/v1/farmers/me?phone=${farmerUser.phone}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === 'success' && data.data) {
-            setFarmerUser(data.data);
-            localStorage.setItem('stubble_farmer_user', JSON.stringify(data.data));
-          }
-        })
-        .catch(err => console.error('Failed to sync farmer profile:', err));
-    }
+    const syncFarmerProfile = () => {
+      const saved = localStorage.getItem('stubble_farmer_user');
+      let phone = farmerUser?.phone;
+      if (!phone && saved) {
+        try { phone = JSON.parse(saved)?.phone; } catch { phone = null; }
+      }
+      if (phone) {
+        fetch(`http://localhost:8000/api/v1/farmers/me?phone=${phone}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success' && data.data) {
+              setFarmerUser(data.data);
+              localStorage.setItem('stubble_farmer_user', JSON.stringify(data.data));
+            }
+          })
+          .catch(err => console.error('Failed to sync farmer profile:', err));
+      }
+    };
+
+    syncFarmerProfile();
+    window.addEventListener('refresh-dashboard-data', syncFarmerProfile);
+    return () => window.removeEventListener('refresh-dashboard-data', syncFarmerProfile);
   }, [farmerUser?.phone]);
 
   // State management
@@ -353,6 +364,7 @@ export default function App() {
       {activeQuickAction && (
         <QuickActionModal
           actionType={activeQuickAction}
+          farmerUser={farmerUser}
           onClose={() => setActiveQuickAction(null)}
           onSuccess={() => {
             showToast('Action completed successfully!');

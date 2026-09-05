@@ -20,6 +20,7 @@ class Field(Base):
     crop_type = Column(String)
     harvest_date = Column(String)
     biomass = Column(Float)
+    status = Column(String, default="Pending")
     cluster_id = Column(String, ForeignKey("clusters.id"), nullable=True)
     
     # PostGIS point for location

@@ -159,22 +159,26 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
     });
   };
 
-  // Custom DivIcon for Field Pins (Green circle with leaf)
-  const createFieldIcon = () => {
+  // Custom DivIcon for Field Pins (Green circle for active/pending, Grey for completed)
+  const createFieldIcon = (status) => {
+    const isCompleted = status === 'Completed';
+    const bgColor = isCompleted ? '#6b7280' : '#10b981';
+    const borderColor = isCompleted ? '#9ca3af' : '#ffffff';
     return L.divIcon({
       className: 'custom-leaflet-div-icon',
       html: `
         <div style="
-          background-color: #10b981;
+          background-color: ${bgColor};
           width: 18px;
           height: 18px;
           border-radius: 50%;
-          border: 2px solid #ffffff;
+          border: 2px solid ${borderColor};
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+          box-shadow: 0 2px 5px rgba(0,0,0,0.4);
           cursor: pointer;
+          opacity: ${isCompleted ? '0.7' : '1'};
         ">
           <div style="width: 6px; height: 6px; background: white; border-radius: 50%;"></div>
         </div>
@@ -590,15 +594,22 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
             <Marker 
               key={f.id} 
               position={f.coords} 
-              icon={createFieldIcon()}
+              icon={createFieldIcon(f.status)}
               eventHandlers={{
                 click: () => window.dispatchEvent(new CustomEvent('open-fields-directory')),
               }}
             >
               <Tooltip direction="top" offset={[0, -5]}>
                 <div className="text-xs font-sans">
-                  <div className="font-bold text-emerald-800">{f.name || f.farmer_name || 'Farm Field'}</div>
-                  <div className="text-gray-700">{f.farmer || f.farmer_name || 'Farmer'}</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-emerald-800">{f.name || f.farmer_name || 'Farm Field'}</span>
+                    {f.status === 'Completed' ? (
+                      <span className="px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-700 font-bold text-[9px]">Completed</span>
+                    ) : (
+                      <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[9px]">Pending</span>
+                    )}
+                  </div>
+                  <div className="text-gray-700 font-medium">{f.farmer_name || f.farmer || 'Farmer'}</div>
                   <div className="text-gray-500">
                     {f.village} &bull; {f.acres || f.area_acres || 0} Acres &bull; {f.biomass || f.biomass_est || 0} Tonnes
                   </div>

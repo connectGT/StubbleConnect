@@ -26,8 +26,6 @@ export default function BuyerSidebar({
   const navItems = [
     { id: 'marketplace', label: 'Procurement Marketplace', icon: ShoppingCart },
     { id: 'inbound', label: 'Inbound Fleet Radar', icon: Truck, badge: '4' },
-    { id: 'quality', label: 'Quality & Moisture Lab', icon: FlaskConical },
-    { id: 'analytics', label: 'CBG Yield & Carbon ESG', icon: BarChart3 },
   ];
 
   return (
@@ -49,15 +47,13 @@ export default function BuyerSidebar({
         <div className="p-5 pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
-                <Building2 className="w-5 h-5 text-emerald-400" />
-              </div>
+              <img src="/logo.jpg" alt="StubbleConnect Logo" className="w-9 h-9 rounded-lg object-cover border border-emerald-500/30 shadow-inner" />
               <div>
                 <h1 className="text-white font-bold text-base tracking-tight leading-none">
                   Stubble<span className="text-emerald-400">Connect</span>
                 </h1>
                 <p className="text-[11px] text-[#6b8e81] font-medium tracking-wide mt-1">
-                  Biogas Plant Buyer Portal
+                  Biomass Buyer Portal
                 </p>
               </div>
             </div>
@@ -71,7 +67,7 @@ export default function BuyerSidebar({
 
           {/* Plant Selector Dropdown */}
           <div className="mt-4 pt-3 border-t border-[#12382b]">
-            <label className="block text-[10px] uppercase font-bold text-[#6b8e81] mb-1">Active Biogas Plant:</label>
+            <label className="block text-[10px] uppercase font-bold text-[#6b8e81] mb-1">Active Biomass Plant:</label>
             <div className="relative">
               <select
                 value={activePlant.id}
@@ -138,7 +134,7 @@ export default function BuyerSidebar({
             <div>
               <div className="text-xs font-bold text-white flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Biogas Plant Mode</span>
+                <span>Biomass Plant Mode</span>
               </div>
               <p className="text-[10px] text-[#6b8e81] mt-0.5">{activePlant.manager}</p>
             </div>

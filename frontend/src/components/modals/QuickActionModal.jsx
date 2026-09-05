@@ -22,10 +22,10 @@ const PUNJAB_LOCATIONS = {
   "Sangrur": { lat: 30.245, lng: 75.833 }
 };
 
-export default function QuickActionModal({ actionType, onClose, onSuccess }) {
-  const [formData, setFormData] = useState({
-    farmerName: '',
-    phone: '',
+export default function QuickActionModal({ actionType, onClose, onSuccess, farmerUser }) {
+  const [formData, setFormData] = useState(() => ({
+    farmerName: farmerUser?.name || '',
+    phone: farmerUser?.phone || '',
     village: 'Bathinda City',
     customVillage: '',
     acres: '12',
@@ -35,7 +35,7 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
     buyerType: 'Biogas & Bio-CNG',
     buyerCapacity: '500',
     buyerLocation: 'Bathinda City'
-  });
+  }));
 
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -58,9 +58,13 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
         const finalLat = (coords?.lat || 30.211) + (Math.random() * 0.01 - 0.005);
         const finalLng = (coords?.lng || 74.945) + (Math.random() * 0.01 - 0.005);
 
+        const rawPhone = (formData.phone || farmerUser?.phone || '').replace(/[\s-+]/g, '');
+        const normalizedPhone = rawPhone.length > 10 && rawPhone.startsWith('91') ? rawPhone.slice(2) : (rawPhone || '9876543210');
+        const resolvedFarmerName = formData.farmerName.trim() || farmerUser?.name || 'Farmer';
+
         const payload = {
-          farmer_name: formData.farmerName || 'Farmer',
-          phone: formData.phone || '+910000000000',
+          farmer_name: resolvedFarmerName,
+          phone: normalizedPhone,
           village: resolvedVillage,
           district: 'Bathinda',
           state: 'Punjab',
@@ -68,7 +72,8 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
           crop_type: formData.cropType || 'Paddy / Basmati',
           latitude: finalLat,
           longitude: finalLng,
-          harvest_date: formData.harvestDate
+          harvest_date: formData.harvestDate,
+          status: 'Pending'
         };
 
         const res = await fetch('http://localhost:8000/api/v1/fields/register', {
@@ -116,6 +121,7 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
         setSuccessMsg(data.message || 'VRP solver generated optimal pickup routes!');
       }
 
+      window.dispatchEvent(new CustomEvent('refresh-dashboard-data'));
       // Only auto-close on actual success
       setTimeout(() => {
         if (onSuccess) onSuccess();
@@ -182,6 +188,39 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
             </div>
           ) : actionType === 'register_field' ? (
             <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">
+                    Farmer Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Gurmit Singh"
+                    value={formData.farmerName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, farmerName: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">
+                    Mobile Number
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="e.g. 9876543210"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block font-semibold text-gray-700 mb-1">
                   Select Field

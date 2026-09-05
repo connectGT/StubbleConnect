@@ -98,14 +98,19 @@ def get_all_clusters(db: Session = Depends(get_db)):
 @router.post("/recompute")
 def recompute_clusters(db: Session = Depends(get_db)):
     from sqlalchemy import func
-    # 1. Fetch all fields
+    # 1. Fetch active fields (exclude Completed fields)
     fields = db.query(
         Field,
         func.ST_Y(Field.geom).label('lat'),
         func.ST_X(Field.geom).label('lng')
+    ).filter(
+        (Field.status != "Completed") | (Field.status.is_(None))
     ).all()
     if not fields:
-        return {"status": "error", "message": "No fields registered to cluster."}
+        db.query(Field).update({Field.cluster_id: None})
+        db.query(Cluster).delete()
+        db.commit()
+        return {"status": "success", "message": "No active fields to cluster.", "active_clusters_formed": 0}
 
     farms_data = []
     for f, lat, lng in fields:

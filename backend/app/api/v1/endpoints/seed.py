@@ -77,6 +77,9 @@ def seed_database(db: Session = Depends(get_db)):
         harvest_days = 2 if i == 0 else (4 + i)
         harvest_dt = (today + timedelta(days=harvest_days)).isoformat()
         
+        # Seed 2 of initial 10 fields (i=8 and i=9) with status="Completed", and rest "Pending"
+        field_status = "Completed" if i in [8, 9] else "Pending"
+
         field = Field(
             farmer_name=farmer_names[i],
             phone=phone,
@@ -87,6 +90,7 @@ def seed_database(db: Session = Depends(get_db)):
             crop_type="Paddy / Basmati" if i % 2 == 0 else "PR-126 Paddy",
             harvest_date=harvest_dt,
             biomass=biomass,
+            status=field_status,
             geom=f"SRID=4326;POINT({lng} {lat})"
         )
         db.add(field)
@@ -102,6 +106,7 @@ def seed_database(db: Session = Depends(get_db)):
         crop_type="Basmati 1509",
         harvest_date=(today - timedelta(days=20)).isoformat(),
         biomass=12.5,
+        status="Completed",
         geom="SRID=4326;POINT(74.965 30.215)"
     )
     db.add(past_field)

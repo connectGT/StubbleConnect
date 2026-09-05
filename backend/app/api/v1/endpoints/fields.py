@@ -6,6 +6,8 @@ from app.schemas.schemas import FieldRegisterRequest
 from app.db.database import get_db
 from app.db.models import Field
 
+from app.ml_engine.risk_model.burning_risk import calculate_dynamic_burning_risk
+
 router = APIRouter(prefix="/fields", tags=["Fields"])
 
 @router.get("/")
@@ -23,23 +25,37 @@ def get_all_fields(db: Session = Depends(get_db)):
             "id": f.id,
             "name": f"Farm {f.id[:4]}",
             "farmer": f.farmer_name,
+            "farmer_name": f.farmer_name,
+            "phone": f.phone,
             "village": f.village,
+            "district": f.district,
+            "state": f.state,
             "acres": f.acres,
+            "crop_type": f.crop_type,
             "biomass": f"{f.biomass} T",
             "coords": [lat, lng],
-            "cluster": f.cluster.name if f.cluster else "Unassigned"
+            "cluster": f.cluster.name if f.cluster else "Unassigned",
+            "cluster_id": f.cluster_id,
+            "is_clustered": f.cluster_id is not None,
+            "harvest_date": f.harvest_date,
+            "status": f.status or "Pending",
+            "risk_score": calculate_dynamic_burning_risk(f.harvest_date, f.status),
         })
-        
 
     return {"status": "success", "count": len(data), "data": data}
 
 @router.post("/register")
 def register_field(payload: FieldRegisterRequest, db: Session = Depends(get_db)):
     est_biomass = round(payload.acres * 0.55, 1)
+
+    # Normalize phone number to 10 digits
+    clean_phone = payload.phone.replace("+91", "").replace(" ", "").replace("-", "").strip()
+    if len(clean_phone) > 10 and clean_phone.startswith("91"):
+        clean_phone = clean_phone[2:]
     
     new_field = Field(
         farmer_name=payload.farmer_name,
-        phone=payload.phone,
+        phone=clean_phone,
         village=payload.village,
         district=payload.district,
         state=payload.state,
@@ -47,7 +63,8 @@ def register_field(payload: FieldRegisterRequest, db: Session = Depends(get_db))
         crop_type=payload.crop_type,
         harvest_date=payload.harvest_date,
         geom=f"SRID=4326;POINT({payload.longitude} {payload.latitude})",
-        biomass=est_biomass
+        biomass=est_biomass,
+        status=payload.status or "Pending"
     )
     db.add(new_field)
     db.commit()
@@ -59,6 +76,27 @@ def register_field(payload: FieldRegisterRequest, db: Session = Depends(get_db))
         "data": {
             "id": new_field.id,
             "farmer_name": new_field.farmer_name,
+            "status": new_field.status,
             "coords": [payload.latitude, payload.longitude]
+        }
+    }
+
+@router.post("/{field_id}/complete")
+def complete_field(field_id: str, db: Session = Depends(get_db)):
+    field = db.query(Field).filter(Field.id == field_id).first()
+    if not field:
+        raise HTTPException(status_code=404, detail=f"Field {field_id} not found")
+    field.status = "Completed"
+    field.cluster_id = None
+    db.commit()
+    db.refresh(field)
+    return {
+        "status": "success",
+        "message": f"Field {field_id} marked as Completed",
+        "new_status": "Completed",
+        "data": {
+            "id": field.id,
+            "status": field.status,
+            "cluster_id": field.cluster_id
         }
     }

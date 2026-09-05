@@ -323,18 +323,18 @@ export const routesData = [
 ];
 
 export const registeredFields = [
-  { id: 'f1', name: 'Field #101', farmer: 'Harjit Singh', village: 'Talwandi', coords: [30.23, 74.94], acres: 12, biomass: '6.2 T' },
-  { id: 'f2', name: 'Field #102', farmer: 'Gurpreet Kaur', village: 'Bhucho Mandi', coords: [30.28, 74.97], acres: 9, biomass: '4.8 T' },
-  { id: 'f3', name: 'Field #103', farmer: 'Balwinder Singh', village: 'Kotkapura Rd', coords: [30.32, 74.82], acres: 15, biomass: '8.1 T' },
-  { id: 'f4', name: 'Field #104', farmer: 'Sukhdev Singh', village: 'Maur Mandi', coords: [30.07, 75.24], acres: 11, biomass: '5.9 T' },
-  { id: 'f5', name: 'Field #105', farmer: 'Jagtar Singh', village: 'Longowal North', coords: [30.18, 75.22], acres: 14, biomass: '7.2 T' },
-  { id: 'f6', name: 'Field #106', farmer: 'Manjit Singh', village: 'Dirba East', coords: [30.33, 75.39], acres: 8, biomass: '4.2 T' },
-  { id: 'f7', name: 'Field #107', farmer: 'Kuldeep Singh', village: 'Abohar Border', coords: [30.14, 74.52], acres: 10, biomass: '5.1 T' },
-  { id: 'f8', name: 'Field #108', farmer: 'Jaswant Singh', village: 'Kotkapura', coords: [30.21, 74.62], acres: 13, biomass: '6.9 T' },
-  { id: 'f9', name: 'Field #109', farmer: 'Davinder Singh', village: 'Talwandi Sabo', coords: [30.35, 74.93], acres: 16, biomass: '8.5 T' },
-  { id: 'f10', name: 'Field #110', farmer: 'Hardip Singh', village: 'Dirba West', coords: [30.28, 75.29], acres: 11, biomass: '5.8 T' },
-  { id: 'f11', name: 'Field #111', farmer: 'Surjit Singh', village: 'Mansa South', coords: [30.03, 75.38], acres: 9.5, biomass: '4.9 T' },
-  { id: 'f12', name: 'Field #112', farmer: 'Bikramjit Singh', village: 'Bhucho Khurd', coords: [30.25, 75.03], acres: 12.5, biomass: '6.5 T' },
+  { id: 'f1', name: 'Field #101', farmer: 'Harjit Singh', farmer_name: 'Harjit Singh', village: 'Talwandi', coords: [30.23, 74.94], acres: 12, biomass: '6.2 T', status: 'Pending' },
+  { id: 'f2', name: 'Field #102', farmer: 'Gurpreet Kaur', farmer_name: 'Gurpreet Kaur', village: 'Bhucho Mandi', coords: [30.28, 74.97], acres: 9, biomass: '4.8 T', status: 'Pending' },
+  { id: 'f3', name: 'Field #103', farmer: 'Balwinder Singh', farmer_name: 'Balwinder Singh', village: 'Kotkapura Rd', coords: [30.32, 74.82], acres: 15, biomass: '8.1 T', status: 'Pending' },
+  { id: 'f4', name: 'Field #104', farmer: 'Sukhdev Singh', farmer_name: 'Sukhdev Singh', village: 'Maur Mandi', coords: [30.07, 75.24], acres: 11, biomass: '5.9 T', status: 'Pending' },
+  { id: 'f5', name: 'Field #105', farmer: 'Jagtar Singh', farmer_name: 'Jagtar Singh', village: 'Longowal North', coords: [30.18, 75.22], acres: 14, biomass: '7.2 T', status: 'Pending' },
+  { id: 'f6', name: 'Field #106', farmer: 'Manjit Singh', farmer_name: 'Manjit Singh', village: 'Dirba East', coords: [30.33, 75.39], acres: 8, biomass: '4.2 T', status: 'Pending' },
+  { id: 'f7', name: 'Field #107', farmer: 'Kuldeep Singh', farmer_name: 'Kuldeep Singh', village: 'Abohar Border', coords: [30.14, 74.52], acres: 10, biomass: '5.1 T', status: 'Pending' },
+  { id: 'f8', name: 'Field #108', farmer: 'Jaswant Singh', farmer_name: 'Jaswant Singh', village: 'Kotkapura', coords: [30.21, 74.62], acres: 13, biomass: '6.9 T', status: 'Pending' },
+  { id: 'f9', name: 'Field #109', farmer: 'Davinder Singh', farmer_name: 'Davinder Singh', village: 'Talwandi Sabo', coords: [30.35, 74.93], acres: 16, biomass: '8.5 T', status: 'Pending' },
+  { id: 'f10', name: 'Field #110', farmer: 'Hardip Singh', farmer_name: 'Hardip Singh', village: 'Dirba West', coords: [30.28, 75.29], acres: 11, biomass: '5.8 T', status: 'Pending' },
+  { id: 'f11', name: 'Field #111', farmer: 'Surjit Singh', farmer_name: 'Surjit Singh', village: 'Mansa South', coords: [30.03, 75.38], acres: 9.5, biomass: '4.9 T', status: 'Completed' },
+  { id: 'f12', name: 'Field #112', farmer: 'Bikramjit Singh', farmer_name: 'Bikramjit Singh', village: 'Bhucho Khurd', coords: [30.25, 75.03], acres: 12.5, biomass: '6.5 T', status: 'Completed' },
 ];
 
 export const recentActivities = [
