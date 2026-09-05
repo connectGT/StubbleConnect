@@ -65,3 +65,42 @@ def get_recent_activities(db: Session = Depends(get_db)):
         })
         
     return activities
+
+@router.get("/alerts")
+def get_alerts(db: Session = Depends(get_db)):
+    alerts = []
+    
+    # 1. High Risk Clusters
+    high_risk_clusters = db.query(Cluster).filter(Cluster.risk_score >= 65).all()
+    for c in high_risk_clusters:
+        alerts.append({
+            "id": f"alert-risk-{c.id}",
+            "type": "warning",
+            "title": f"High Burning Risk in {c.name}",
+            "message": f"{c.farms_count} farms with {c.total_biomass}T biomass. Priority dispatch required.",
+            "time": "Recently"
+        })
+        
+    # 2. Buyer Capacity
+    new_buyers = db.query(Buyer).order_by(Buyer.id.desc()).limit(1).all()
+    for b in new_buyers:
+        alerts.append({
+            "id": f"alert-buyer-{b.id}",
+            "type": "info",
+            "title": "New Buyer Quota Opened",
+            "message": f"{b.plant_name} in {b.location} added {b.daily_capacity_tonnes} Tonnes capacity.",
+            "time": "Recently"
+        })
+        
+    # 3. Route Status
+    active_routes = db.query(Route).filter(Route.status == "In Progress").limit(1).all()
+    for r in active_routes:
+        alerts.append({
+            "id": f"alert-route-{r.id}",
+            "type": "success",
+            "title": f"Route {r.code} In Transit",
+            "message": f"Driver heading to {r.buyer_id} with {r.tonnage}T.",
+            "time": "Recently"
+        })
+        
+    return alerts

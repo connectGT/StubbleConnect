@@ -11,9 +11,6 @@ import {
   ExternalLink,
   Wheat,
   Share2,
-  Settings,
-  Cpu,
-  Truck
 } from 'lucide-react';
 
 export default function ListViewModal({ type, onClose, onSelectCluster }) {
@@ -22,12 +19,19 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
   const [fields, setFields] = useState([]);
   const [clusters, setClusters] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [alerts, setAlerts] = useState([]);
 
   useEffect(() => {
     if (type === 'activity') {
       fetch('http://localhost:8000/api/v1/analytics/activity-feed')
         .then(res => res.json())
         .then(data => setActivities(data))
+        .catch(err => console.error(err));
+    }
+    if (type === 'notifications') {
+      fetch('http://localhost:8000/api/v1/analytics/alerts')
+        .then(res => res.json())
+        .then(data => setAlerts(data))
         .catch(err => console.error(err));
     }
     if (type === 'routes') {
@@ -299,21 +303,29 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
 
           {type === 'notifications' && (
             <div className="space-y-3">
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                <div className="font-bold text-amber-900">High Burning Risk in Cluster #12</div>
-                <p className="text-amber-800 mt-0.5">8 farms scheduled for harvest within 36 hours. Priority dispatch required.</p>
-                <span className="text-[10px] text-amber-600 font-semibold">5 mins ago</span>
-              </div>
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl">
-                <div className="font-bold text-blue-900">New Buyer Quota Opened</div>
-                <p className="text-blue-800 mt-0.5">GreenFuel Plant Bathinda increased capacity by 100 Tonnes.</p>
-                <span className="text-[10px] text-blue-600 font-semibold">30 mins ago</span>
-              </div>
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-                <div className="font-bold text-emerald-900">Route #R-08 In Transit</div>
-                <p className="text-emerald-800 mt-0.5">Driver arrived at first pickup stop in Talwandi.</p>
-                <span className="text-[10px] text-emerald-600 font-semibold">1 hour ago</span>
-              </div>
+              {alerts.length === 0 ? (
+                <div className="text-center p-4 text-gray-500 italic">No critical alerts or notifications right now.</div>
+              ) : (
+                alerts.map((al, i) => (
+                  <div key={i} className={`p-3 border rounded-xl ${
+                    al.type === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-900' :
+                    al.type === 'info' ? 'bg-blue-50 border-blue-200 text-blue-900' :
+                    'bg-emerald-50 border-emerald-200 text-emerald-900'
+                  }`}>
+                    <div className="font-bold">{al.title}</div>
+                    <p className={`mt-0.5 ${
+                      al.type === 'warning' ? 'text-amber-800' :
+                      al.type === 'info' ? 'text-blue-800' :
+                      'text-emerald-800'
+                    }`}>{al.message}</p>
+                    <span className={`text-[10px] font-semibold ${
+                      al.type === 'warning' ? 'text-amber-600' :
+                      al.type === 'info' ? 'text-blue-600' :
+                      'text-emerald-600'
+                    }`}>{al.time}</span>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </div>

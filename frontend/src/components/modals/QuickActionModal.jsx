@@ -28,8 +28,8 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     farmerName: '',
     phone: '',
-    village: 'Talwandi Sabo',
-    acres: '10',
+    village: 'Bathinda City',
+    acres: '12',
     cropType: 'Paddy / Basmati',
     harvestDate: '2026-09-06',
     buyerName: '',
