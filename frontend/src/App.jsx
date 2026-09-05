@@ -272,32 +272,6 @@ export default function App() {
         </div>
       )}
 
-      {/* High-Visibility Floating Role Launchers */}
-      <div className="fixed bottom-6 left-6 z-40 flex flex-col gap-3">
-        {/* Driver Button (Above) */}
-        <button
-          onClick={() => handleRoleChange('driver')}
-          className="bg-gradient-to-r from-[#071c15] via-[#0e2c21] to-[#071c15] hover:from-[#12382b] text-white font-extrabold text-xs px-4.5 py-3 rounded-2xl shadow-2xl border border-emerald-400/80 flex items-center gap-3 transition-all hover:scale-105 active:scale-95 cursor-pointer ring-2 ring-emerald-500/20 group"
-        >
-          <span className="text-lg group-hover:scale-110 transition-transform">🚚</span>
-          <div className="text-left">
-            <div className="text-[10px] text-emerald-400 font-black uppercase tracking-wider">Parali Pickup</div>
-            <div className="text-xs font-black text-white">Truck Driver Mode</div>
-          </div>
-        </button>
-
-        {/* Biogas Plant Buyer Button (Below) */}
-        <button
-          onClick={() => handleRoleChange('buyer')}
-          className="bg-gradient-to-r from-[#0a251c] via-[#0f3427] to-[#0a251c] hover:from-[#12382b] text-white font-extrabold text-xs px-4.5 py-3 rounded-2xl shadow-2xl border border-emerald-400/80 flex items-center gap-3 transition-all hover:scale-105 active:scale-95 cursor-pointer ring-2 ring-emerald-500/20 group"
-        >
-          <span className="text-lg group-hover:scale-110 transition-transform">🏭</span>
-          <div className="text-left">
-            <div className="text-[10px] text-emerald-400 font-black uppercase tracking-wider">Buyer Portal</div>
-            <div className="text-xs font-black text-white">Biogas Plant Mode</div>
-          </div>
-        </button>
-      </div>
 
       {/* Modal: Full Cluster Breakdown & Logistics Dispatch */}
       {isClusterModalOpen && (

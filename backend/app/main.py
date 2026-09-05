@@ -20,11 +20,11 @@ app = FastAPI(
 async def startup_event():
     asyncio.create_task(websockets.simulate_truck_movement())
 
-# CORS configuration
+# CORS configuration — allow all origins (safe for hackathon/dev)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

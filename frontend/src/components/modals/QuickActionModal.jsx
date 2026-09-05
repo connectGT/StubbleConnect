@@ -40,17 +40,19 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
 
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   if (!actionType) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
 
     try {
       if (actionType === 'register_field') {
         const coords = PUNJAB_LOCATIONS[formData.village];
-        // Add tiny jitter so multiple farms in same village don't overlap perfectly
         const finalLat = coords.lat + (Math.random() * 0.01 - 0.005);
         const finalLng = coords.lng + (Math.random() * 0.01 - 0.005);
 
@@ -74,13 +76,9 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
         });
 
         if (!res.ok) throw new Error('API request failed');
-        
-        const data = await res.json();
         setSuccessMsg(`Field registered at ${formData.village}! Assigned to spatial grid.`);
       } else if (actionType === 'add_buyer') {
         const coords = PUNJAB_LOCATIONS[formData.buyerLocation] || PUNJAB_LOCATIONS["Bathinda City"];
-        const finalLat = coords.lat;
-        const finalLng = coords.lng;
 
         const payload = {
           plant_name: formData.buyerName || 'Industrial Plant',
@@ -89,8 +87,8 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
           current_stored_tonnes: 0,
           location: formData.buyerLocation,
           contact: '+910000000000',
-          latitude: finalLat,
-          longitude: finalLng
+          latitude: coords.lat,
+          longitude: coords.lng
         };
         const res = await fetch('http://localhost:8000/api/v1/buyers/register', {
           method: 'POST',
@@ -113,17 +111,19 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
         });
         if (!res.ok) throw new Error('API request failed');
         const data = await res.json();
-        setSuccessMsg(data.message || 'Vehicle Routing Problem (VRP) solver generated optimal pickup routes!');
+        setSuccessMsg(data.message || 'VRP solver generated optimal pickup routes!');
       }
-    } catch (err) {
-      console.error(err);
-      setSuccessMsg('Error: Could not connect to backend server. Make sure it is running on port 8000.');
-    } finally {
-      setLoading(false);
+
+      // Only auto-close on actual success
       setTimeout(() => {
         if (onSuccess) onSuccess();
         onClose();
       }, 1800);
+    } catch (err) {
+      console.error(err);
+      setErrorMsg('Could not connect to backend server. Make sure it is running on port 8000.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -161,6 +161,22 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
               </div>
               <h4 className="text-base font-bold text-gray-900">Success!</h4>
               <p className="text-xs text-gray-600 max-w-xs">{successMsg}</p>
+            </div>
+          ) : errorMsg ? (
+            <div className="py-6 flex flex-col items-center justify-center text-center space-y-2">
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+              </div>
+              <h4 className="text-base font-bold text-red-700">Connection Error</h4>
+              <p className="text-xs text-red-600 max-w-xs">{errorMsg}</p>
+              <button
+                onClick={() => setErrorMsg('')}
+                className="mt-2 px-4 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Try Again
+              </button>
             </div>
           ) : actionType === 'register_field' ? (
             <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
