@@ -269,7 +269,7 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
           {type === 'risk' && (
             <div className="space-y-3">
               <p className="text-gray-600">
-                5 High-Risk Agricultural Clusters identified with less than 48 hours remaining in their harvest burn window:
+                {clusters.filter(c => c.riskScore >= 65).length} High-Risk Agricultural Clusters identified with less than 48 hours remaining in their harvest burn window:
               </p>
               {clusters
                 .filter((c) => c.riskScore >= 65)

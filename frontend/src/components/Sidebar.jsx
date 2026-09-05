@@ -53,7 +53,7 @@ export default function Sidebar({
     { id: 'routes', label: 'Routes', icon: Route },
     { id: 'risk_map', label: 'Risk Map', icon: Flame },
     { id: 'reports', label: 'Reports', icon: FileText },
-    { id: 'alerts', label: 'Alerts', icon: Bell, badge: '3' },
+    { id: 'alerts', label: 'Alerts', icon: Bell },
     { id: 'settings', label: 'AI Config', icon: Settings },
   ];
 
@@ -95,7 +95,7 @@ export default function Sidebar({
         { id: 'receipts', label: 'Download Receipts' },
       ]
     },
-    { id: 'alerts', label: 'Alerts', icon: Bell, badge: '3' }
+    { id: 'alerts', label: 'Alerts', icon: Bell }
   ];
 
   const farmerQuickActions = [

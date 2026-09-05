@@ -81,12 +81,9 @@ export default function Header({
         <button
           onClick={onOpenNotifications}
           className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-          title="3 unread notifications"
         >
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-amber-500 text-white font-bold text-[10px] rounded-full flex items-center justify-center border-2 border-white shadow-xs">
-            3
-          </span>
+
         </button>
 
         {/* Profile + Logout */}
