@@ -39,34 +39,29 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     }
 
 @router.get("/activity-feed")
-def get_recent_activities():
-    return [
-        {
-            "id": "act-1",
+def get_recent_activities(db: Session = Depends(get_db)):
+    activities = []
+    
+    # 1. Get a few recent fields
+    recent_fields = db.query(Field).order_by(Field.id.desc()).limit(3).all()
+    for f in recent_fields:
+        activities.append({
+            "id": f.id,
             "type": "field_registered",
-            "title": "Field registered by Harjit Singh",
-            "subtitle": "Village Talwandi",
-            "time": "10 mins ago"
-        },
-        {
-            "id": "act-2",
-            "type": "cluster_matched",
-            "title": "Cluster #12 matched with GreenFuel Plant",
-            "subtitle": None,
-            "time": "12 mins ago"
-        },
-        {
-            "id": "act-3",
+            "title": f"Field registered by {f.farmer_name}",
+            "subtitle": f"Village {f.village}",
+            "time": "Recently"
+        })
+        
+    # 2. Get a few recent routes
+    recent_routes = db.query(Route).order_by(Route.id.desc()).limit(2).all()
+    for r in recent_routes:
+        activities.append({
+            "id": r.id,
             "type": "route_generated",
-            "title": "Route generated for Cluster #12",
-            "subtitle": None,
-            "time": "18 mins ago"
-        },
-        {
-            "id": "act-4",
-            "type": "field_registered",
-            "title": "Field registered by Gurpreet Kaur",
-            "subtitle": "Village Bhucho Mandi",
-            "time": "25 mins ago"
-        }
-    ]
+            "title": f"{r.code} completed for {r.buyer_id}",
+            "subtitle": f"{r.tonnage} Tonnes scheduled",
+            "time": "Recently"
+        })
+        
+    return activities

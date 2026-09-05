@@ -47,7 +47,7 @@ TRUCKS = [
         "total_duration_sec": real_routes["TRK-201"]["duration"],
         "current_segment": 0,
         "progress": 0.0,
-        "speed": 0.3,  # animation speed
+        "speed": 0.05,  # smooth normal speed
         "delay_mins": 0,
         "delay_status": "On Time"
     },
@@ -61,7 +61,7 @@ TRUCKS = [
         "total_duration_sec": real_routes["TRK-405"]["duration"],
         "current_segment": int(len(real_routes["TRK-405"]["path"]) * 0.2), # start 20% in
         "progress": 0.0,
-        "speed": 0.4,
+        "speed": 0.06,
         "delay_mins": 14,
         "delay_status": "14 mins late (Traffic)"
     },
@@ -75,9 +75,51 @@ TRUCKS = [
         "total_duration_sec": real_routes["TRK-708"]["duration"],
         "current_segment": int(len(real_routes["TRK-708"]["path"]) * 0.7),
         "progress": 0.0,
-        "speed": 0.5,
+        "speed": 0.05,
         "delay_mins": 0,
         "delay_status": "On Time"
+    },
+    {
+        "id": "TRK-112",
+        "status": "Transporting Biomass",
+        "color": "#ef4444",
+        "tonnage": "45.0 Tonnes",
+        "destination": "EcoHeat Ludhiana",
+        "path": real_routes["TRK-201"]["path"][::-1], # Reverse path
+        "total_duration_sec": real_routes["TRK-201"]["duration"],
+        "current_segment": int(len(real_routes["TRK-201"]["path"]) * 0.4),
+        "progress": 0.0,
+        "speed": 0.07,
+        "delay_mins": 0,
+        "delay_status": "On Time"
+    },
+    {
+        "id": "TRK-990",
+        "status": "En route to Collection",
+        "color": "#8b5cf6",
+        "tonnage": "0.0 (Empty)",
+        "destination": "Cluster #03 Fields",
+        "path": real_routes["TRK-405"]["path"][::-1],
+        "total_duration_sec": real_routes["TRK-405"]["duration"],
+        "current_segment": int(len(real_routes["TRK-405"]["path"]) * 0.1),
+        "progress": 0.0,
+        "speed": 0.04,
+        "delay_mins": 0,
+        "delay_status": "On Time"
+    },
+    {
+        "id": "TRK-334",
+        "status": "Transporting Biomass",
+        "color": "#f97316",
+        "tonnage": "28.5 Tonnes",
+        "destination": "AgriPower Moga",
+        "path": real_routes["TRK-708"]["path"],
+        "total_duration_sec": real_routes["TRK-708"]["duration"],
+        "current_segment": int(len(real_routes["TRK-708"]["path"]) * 0.85),
+        "progress": 0.0,
+        "speed": 0.05,
+        "delay_mins": 5,
+        "delay_status": "5 mins late (Loading)"
     }
 ]
 
