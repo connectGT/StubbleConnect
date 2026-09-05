@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, JSON, Boolean
 from sqlalchemy.orm import relationship
 from geoalchemy2 import Geometry
 from app.db.database import Base
@@ -75,3 +75,18 @@ class Route(Base):
     status = Column(String)
     
     path_coords = Column(JSON)
+
+class Farmer(Base):
+    __tablename__ = "farmers"
+    id = Column(String, primary_key=True, default=generate_uuid, index=True)
+    name = Column(String, nullable=False)
+    phone = Column(String, unique=True, index=True, nullable=False)
+    village = Column(String, nullable=False)
+    district = Column(String, default="Bathinda")
+    state = Column(String, default="Punjab")
+    fpo_id = Column(String, unique=True)
+    tier = Column(String, default="Green")
+    joined_date = Column(String)
+    is_verified = Column(Boolean, default=True)
+    total_biomass_sold = Column(Float, default=0.0)
+    total_earnings = Column(Float, default=0.0)

@@ -22,6 +22,21 @@ export default function App() {
     } catch { return null; }
   });
 
+  // Re-verify and fetch fresh data from backend on boot
+  useEffect(() => {
+    if (farmerUser?.phone) {
+      fetch(`http://localhost:8000/api/v1/farmers/me?phone=${farmerUser.phone}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success' && data.data) {
+            setFarmerUser(data.data);
+            localStorage.setItem('stubble_farmer_user', JSON.stringify(data.data));
+          }
+        })
+        .catch(err => console.error('Failed to sync farmer profile:', err));
+    }
+  }, []);
+
   // State management
   const [activeTab, setActiveTab] = useState('dashboard');
   // If we already have a logged-in farmer, start in farmer role
@@ -73,6 +88,12 @@ export default function App() {
   };
 
   // Quick Action Handler
+  React.useEffect(() => {
+    const handleOpenFields = () => setListViewModalType('fields');
+    window.addEventListener('open-fields-directory', handleOpenFields);
+    return () => window.removeEventListener('open-fields-directory', handleOpenFields);
+  }, []);
+
   const handleQuickAction = (actionId) => {
     setActiveQuickAction(actionId);
   };
@@ -209,6 +230,9 @@ export default function App() {
                 }}
                 onOpenBuyerDetails={(buyer) => {
                   setListViewModalType('buyers');
+                }}
+                onOpenLogistics={() => {
+                  setListViewModalType('routes');
                 }}
               />
 

@@ -39,7 +39,7 @@ function MapViewController({ center, zoom }) {
   return null;
 }
 
-export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpenBuyerDetails }) {
+export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpenBuyerDetails, onOpenLogistics }) {
   const [mapZoom, setMapZoom] = useState(9);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [showFields, setShowFields] = useState(true);
@@ -53,6 +53,7 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
   const [localBuyers, setLocalBuyers] = useState([]);
   const [localRoutes, setLocalRoutes] = useState([]);
   const [liveTrucks, setLiveTrucks] = useState({});
+  const [truckPaths, setTruckPaths] = useState({});
 
   useEffect(() => {
     // Fetch Clusters
@@ -93,6 +94,14 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
         if(data.status === 'success') setLocalRoutes(data.data);
       })
       .catch(console.error);
+      
+    // Fetch Truck Paths from backend for polyline overlay
+    fetch('http://localhost:8000/api/v1/trucks/paths')
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') setTruckPaths(data.data);
+      })
+      .catch(() => {});
       
     // WebSocket for Live Tracking
     const ws = new WebSocket('ws://localhost:8000/api/v1/ws/tracking');
@@ -535,7 +544,14 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
         {/* Registered Farm Fields */}
         {layerVisibility.fields &&
           localFields.map((f) => (
-            <Marker key={f.id} position={f.coords} icon={createFieldIcon()}>
+            <Marker 
+              key={f.id} 
+              position={f.coords} 
+              icon={createFieldIcon()}
+              eventHandlers={{
+                click: () => window.dispatchEvent(new CustomEvent('open-fields-directory')),
+              }}
+            >
               <Tooltip direction="top" offset={[0, -5]}>
                 <div className="text-xs font-sans">
                   <div className="font-bold text-emerald-800">{f.name}</div>
@@ -543,6 +559,7 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
                   <div className="text-gray-500">
                     {f.village} &bull; {f.acres} Acres &bull; {f.biomass}
                   </div>
+                  <div className="text-[10px] text-emerald-600 font-bold mt-1 uppercase">Click for Fields Directory &rarr;</div>
                 </div>
               </Tooltip>
             </Marker>
@@ -571,37 +588,94 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
             </Marker>
           ))}
           
-        {/* Live Truck Tracking */}
-        {Object.values(liveTrucks).map((truck) => (
-          <Marker
-            key={truck.truck_id}
-            position={truck.position}
-            icon={L.divIcon({
-              className: 'custom-truck-icon',
-              html: `
-                <div style="
-                  background-color: #3b82f6;
-                  padding: 4px;
-                  border-radius: 50%;
-                  border: 2px solid white;
-                  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  transform: rotate(${truck.heading}deg);
-                ">
-                  🚚
-                </div>
-              `,
-              iconSize: [28, 28],
-              iconAnchor: [14, 14],
-            })}
-          >
-            <Tooltip direction="top">
-              <span className="font-bold text-blue-700">{truck.truck_id}</span> - En route
-            </Tooltip>
-          </Marker>
+        {/* Truck Route Paths (faint ghost lines showing planned road) */}
+        {Object.entries(truckPaths).map(([truckId, pathData]) => (
+          <Polyline
+            key={`path-${truckId}`}
+            positions={pathData.path}
+            pathOptions={{
+              color: pathData.color || '#94a3b8',
+              weight: 2,
+              opacity: 0.3,
+              dashArray: '4, 8',
+            }}
+          />
         ))}
+
+        {/* Live Truck Tracking */}
+        {Object.values(liveTrucks).map((truck) => {
+          const isLate = truck.delay_status && truck.delay_status !== 'On Time';
+          return (
+            <Marker
+              key={truck.truck_id}
+              position={truck.position}
+              eventHandlers={{
+                click: () => onOpenLogistics && onOpenLogistics(),
+              }}
+              icon={L.divIcon({
+                className: 'custom-truck-icon',
+                html: `
+                  <div style="position:relative;">
+                    <div style="
+                      background-color: ${truck.color || '#3b82f6'};
+                      width: 34px;
+                      height: 34px;
+                      border-radius: 50%;
+                      border: 2.5px solid white;
+                      box-shadow: 0 3px 8px rgba(0,0,0,0.45);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 16px;
+                      cursor: pointer;
+                    ">
+                      🚚
+                    </div>
+                    ${isLate ? `<div style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:white;border-radius:50%;width:14px;height:14px;font-size:9px;display:flex;align-items:center;justify-content:center;border:1.5px solid white;font-weight:bold;">!</div>` : ''}
+                  </div>
+                `,
+                iconSize: [34, 34],
+                iconAnchor: [17, 17],
+              })}
+            >
+              <Tooltip direction="top" offset={[0, -14]} opacity={1}>
+                <div className="font-sans text-xs min-w-[180px]">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-bold text-gray-900 text-sm">{truck.truck_id}</span>
+                    <span style={{ color: truck.color || '#3b82f6' }} className="font-bold text-xs">●</span>
+                  </div>
+                  <div className="space-y-1 text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Status</span>
+                      <span className="font-semibold text-gray-800">{truck.status}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Destination</span>
+                      <span className="font-semibold text-gray-800">{truck.destination}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Load</span>
+                      <span className="font-semibold text-gray-800">{truck.tonnage}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-gray-100 pt-1 mt-1">
+                      <span className="text-gray-500">ETA</span>
+                      <span className="font-bold text-emerald-700">{truck.eta_mins} mins</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Schedule</span>
+                      <span className={`font-bold ${isLate ? 'text-red-600' : 'text-emerald-600'}`}>
+                        {truck.delay_status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-blue-600 font-bold mt-1.5 pt-1 border-t border-gray-100 uppercase tracking-wide">
+                    Click → Open Logistics Panel
+                  </div>
+                </div>
+              </Tooltip>
+            </Marker>
+          );
+        })}
       </MapContainer>
     </div>
   );

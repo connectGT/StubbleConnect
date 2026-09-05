@@ -58,3 +58,38 @@ class DashboardStatsResponse(BaseModel):
     matched_clusters: int
     routes_planned: int
     high_risk_areas: int
+
+class FarmerRegisterRequest(BaseModel):
+    name: str
+    phone: str
+    village: str
+    district: str = "Bathinda"
+    state: str = "Punjab"
+
+class FarmerLoginRequest(BaseModel):
+    phone: str
+    otp: str
+
+class FarmerFieldResponse(BaseModel):
+    id: str
+    name: str
+    location: str
+    acres: float
+    crop_type: str
+    harvest_date: str
+    biomass_est: float
+    status: str
+    status_color: str
+
+class FarmerProfileResponse(BaseModel):
+    id: str
+    name: str
+    phone: str
+    village: str
+    district: str
+    fpo_id: str
+    tier: str
+    joined_date: str
+    total_biomass_sold: float
+    total_earnings: float
+    fields: List[FarmerFieldResponse]

@@ -2,15 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Sprout, IndianRupee, Leaf, MapPin, Truck, CheckCircle2,
   Calendar, Bell, MessageCircle, Phone, LogOut, ChevronRight,
-  X, Wheat, Plus, TrendingUp, Shield, CheckCircle, Star
+  X, Wheat, Plus, TrendingUp, Shield, CheckCircle, Star, PlayCircle
 } from 'lucide-react';
+import { Joyride, STATUS } from 'react-joyride';
+import FarmerOnboardingTutorial from './modals/FarmerOnboardingTutorial';
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
-const MY_FIELDS = [
-  { id: 'farm-a', name: 'Farm A', location: 'Talwandi Sabo', acres: 10, crop: 'Paddy / Basmati', harvestDate: '15 Aug 2026', biomassEst: 22.5, status: 'Sold & Paid', statusColor: 'emerald', nearestBuyer: 'GreenFuel Plant, Bathinda', distance: '14.2 km' },
-  { id: 'farm-b', name: 'Farm B', location: 'Rampura Phul', acres: 14, crop: 'Paddy / PR-126', harvestDate: '22 Sep 2026', biomassEst: 28.0, status: 'Pending Collection', statusColor: 'amber', nearestBuyer: 'Malwa Bio-Energy, Mansa', distance: '22.7 km' },
-  { id: 'farm-c', name: 'Farm C', location: 'Goniana', acres: 7, crop: 'Wheat / HD-3086', harvestDate: '10 Oct 2026', biomassEst: 14.0, status: 'Registered', statusColor: 'blue', nearestBuyer: 'Punjab Pellets Ltd.', distance: '9.1 km' },
-];
 
 const PAYMENT_HISTORY = [
   { date: '15 Aug 2026', field: 'Farm A', tonnes: 22.5, rate: 2500, total: 56250, mode: 'UPI', status: 'Paid' },
@@ -236,6 +233,9 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
   const [showRegisterHarvest, setShowRegisterHarvest] = useState(false);
   const [whatsappEnabled, setWhatsappEnabled] = useState(true);
   const [smsEnabled, setSmsEnabled] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(() => {
+    return localStorage.getItem('stubble_tutorial_done') ? false : true;
+  });
   const [etaMinutes, setEtaMinutes] = useState(47);
   const [toast, setToast] = useState('');
 
@@ -254,9 +254,12 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
 
   const name = farmerUser?.name || 'Farmer';
   const village = farmerUser?.village || 'Punjab';
-  const fpoId = farmerUser?.fpoId || '#88392';
+  const fpoId = farmerUser?.fpoId || farmerUser?.fpo_id || '#88392';
   const tier = farmerUser?.tier || 'Green';
-  const joinedDate = farmerUser?.joinedDate || '—';
+  const joinedDate = farmerUser?.joinedDate || farmerUser?.joined_date || '—';
+  
+  const myFields = farmerUser?.fields || [];
+  const hasFields = myFields.length > 0;
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
@@ -273,21 +276,56 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
 
   return (
     <div className="max-w-3xl mx-auto w-full space-y-4 pb-8">
+      <Joyride
+        steps={[
+          {
+            target: '.tour-welcome',
+            content: 'Welcome to your dashboard! This is your control center for selling crop residue.',
+            disableBeacon: true,
+          },
+          {
+            target: '.tour-tabs',
+            content: 'Use these tabs to switch between your fields, payments, and notifications.',
+          },
+          {
+            target: '.tour-register-btn',
+            content: 'Start by registering your first field and harvest date here so buyers can match with you.',
+          }
+        ]}
+        run={showTutorial}
+        continuous={true}
+        showProgress={true}
+        showSkipButton={true}
+        callback={(data) => {
+          if ([STATUS.FINISHED, STATUS.SKIPPED].includes(data.status)) {
+            setShowTutorial(false);
+            localStorage.setItem('stubble_tutorial_done', 'true');
+          }
+        }}
+        styles={{
+          options: { primaryColor: '#059669', zIndex: 1000 }
+        }}
+      />
 
       {/* ── Welcome Banner (bug #3, #6, #16 fixed) ── */}
-      <div className="bg-gradient-to-r from-emerald-800 to-emerald-700 text-white p-5 rounded-2xl shadow-md flex flex-wrap items-center justify-between gap-3">
+      <div className="tour-welcome bg-gradient-to-r from-emerald-800 to-emerald-700 text-white p-5 rounded-2xl shadow-md flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold">Welcome back, {name} 👋</h2>
-          <p className="text-emerald-200 text-sm mt-0.5">Village {village} · FPO ID: {fpoId}</p>
+          <p className="text-emerald-100 text-sm mt-1">{village} • FPO ID: {fpoId}</p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/50 rounded-lg border border-emerald-500/30">
-          <Star className="w-4 h-4 text-amber-300 fill-amber-300" />
-          <span className="font-semibold text-emerald-100 text-sm">{tier} Farmer Tier</span>
+        <div className="flex gap-2">
+          <button onClick={() => setShowTutorial(true)}
+            className="px-3 py-1.5 bg-emerald-600/50 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer transition-colors backdrop-blur-sm">
+            <PlayCircle className="w-3.5 h-3.5" /> Tutorial
+          </button>
+          <button className="px-4 py-2 bg-white text-emerald-800 font-bold text-sm rounded-lg shadow-sm">
+            My Tier: {tier}
+          </button>
         </div>
       </div>
 
       {/* ── Tab Bar ── */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="tour-tabs bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="flex border-b border-gray-100">
           {tabs.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -305,13 +343,26 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
         {/* ═══════════ OVERVIEW TAB ═══════════ */}
         {activeTab === 'overview' && (
           <div className="p-5 space-y-5">
+            {!hasFields && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
+                <span className="text-2xl mt-0.5">🌱</span>
+                <div>
+                  <h3 className="font-bold text-emerald-900">Welcome to StubbleConnect!</h3>
+                  <p className="text-xs text-emerald-700 mt-1">To start earning, you need to register your first field location and estimated harvest date.</p>
+                  <button onClick={() => setShowRegisterHarvest(true)}
+                    className="tour-register-btn mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors">
+                    Register Your First Field
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Stats Cards (bug #5 — clickable) */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <div className="p-2 bg-emerald-100 rounded-lg w-fit mb-2"><Sprout className="w-4 h-4 text-emerald-600" /></div>
                 <p className="text-xs text-gray-500">Total Biomass Sold</p>
-                <p className="text-2xl font-black text-gray-900 mt-0.5">18.5 <span className="text-sm font-normal text-gray-500">T</span></p>
+                <p className="text-2xl font-black text-gray-900 mt-0.5">{farmerUser?.total_biomass_sold || 0} <span className="text-sm font-normal text-gray-500">T</span></p>
               </div>
               <button onClick={() => setActiveTab('payments')}
                 className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-left hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors cursor-pointer group">
@@ -319,15 +370,15 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
                   <div className="p-2 bg-blue-100 rounded-lg"><IndianRupee className="w-4 h-4 text-blue-600" /></div>
                   <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-emerald-500 transition-colors" />
                 </div>
-                <p className="text-xs text-gray-500">Estimated Payout</p>
-                <p className="text-2xl font-black text-gray-900 mt-0.5">₹46,250</p>
+                <p className="text-xs text-gray-500">Total Earnings</p>
+                <p className="text-2xl font-black text-gray-900 mt-0.5">₹{(farmerUser?.total_earnings || 0).toLocaleString()}</p>
                 <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">View Payment History →</p>
               </button>
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <div className="p-2 bg-amber-100 rounded-lg w-fit mb-2"><Leaf className="w-4 h-4 text-amber-600" /></div>
                 <p className="text-xs text-gray-500">Carbon Credits Earned</p>
-                <p className="text-2xl font-black text-gray-900 mt-0.5">14 <span className="text-sm font-normal text-gray-500">Credits</span></p>
-                <p className="text-[10px] text-gray-400 mt-0.5">≈ ₹700 redeemable value</p>
+                <p className="text-2xl font-black text-gray-900 mt-0.5">{(farmerUser?.total_biomass_sold || 0) * 0.75} <span className="text-sm font-normal text-gray-500">Credits</span></p>
+                <p className="text-[10px] text-gray-400 mt-0.5">≈ ₹{((farmerUser?.total_biomass_sold || 0) * 0.75 * 50).toLocaleString()} redeemable value</p>
               </div>
             </div>
 
@@ -347,8 +398,9 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
             </div>
 
             {/* Active Pickup Tracker (bug #4 — live ETA, bug #18 — responsive flex) */}
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+            {hasFields && (
+              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                 <h3 className="font-bold text-gray-900 text-sm">Active Harvest Pickup</h3>
                 <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-full uppercase tracking-wide">In Progress</span>
               </div>
@@ -397,6 +449,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
                 </button>
               </div>
             </div>
+            )}
 
             {/* WhatsApp / SMS toggles (feature #8) */}
             <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
@@ -429,7 +482,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
         {activeTab === 'fields' && (
           <div className="p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-500">{MY_FIELDS.length} registered fields</p>
+              <p className="text-xs text-gray-500">{myFields.length} registered fields</p>
               {/* Bug #1 fixed — opens farmer-specific harvest modal */}
               <button onClick={() => setShowRegisterHarvest(true)}
                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer transition-colors">
@@ -437,86 +490,121 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
               </button>
             </div>
 
-            {/* Bug #2 fixed — clickable field rows */}
-            <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden">
-              {MY_FIELDS.map(field => (
-                <button key={field.id} onClick={() => setSelectedField(field)}
-                  className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left cursor-pointer">
-                  <div>
-                    <h4 className="font-bold text-gray-900 text-sm">{field.name} — {field.location}</h4>
-                    <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
-                      <Calendar className="w-3.5 h-3.5" /> {field.harvestDate} · {field.acres} Acres · {field.crop}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0 ml-3">
-                    <span className="font-bold text-gray-900 text-sm">{field.biomassEst} T</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColors[field.statusColor]}`}>
-                      {field.status}
-                    </span>
-                  </div>
+            {hasFields ? (
+              <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden">
+                {myFields.map(field => (
+                  <button key={field.id} onClick={() => setSelectedField(field)}
+                    className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left cursor-pointer">
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-sm">{field.name} — {field.location}</h4>
+                      <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
+                        <Calendar className="w-3.5 h-3.5" /> {field.harvestDate || 'Not set'} · {field.acres} Acres · {field.crop_type}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0 ml-3">
+                      <span className="font-bold text-gray-900 text-sm">{field.biomass_est} T</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColors[field.status_color] || statusColors.blue}`}>
+                        {field.status}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 border border-dashed border-gray-300 rounded-xl bg-gray-50">
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <MapPin className="w-8 h-8 text-emerald-600" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">No Fields Registered</h3>
+                <p className="text-sm text-gray-500 mb-4 max-w-xs mx-auto">Register your first field to start selling biomass and earning carbon credits.</p>
+                <button onClick={() => setShowRegisterHarvest(true)}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md cursor-pointer transition-colors">
+                  Register Your First Field →
                 </button>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* ═══════════ PAYMENTS TAB (feature #9) ═══════════ */}
         {activeTab === 'payments' && (
           <div className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-gray-900 text-sm">Payment History</h3>
-              <span className="text-xs text-gray-400">All amounts in ₹</span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-gray-50 border border-gray-100 rounded-lg">
-                    {['Date', 'Field', 'Tonnes', 'Rate/T', 'Total', 'Mode', 'Status'].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left font-semibold text-gray-600 first:rounded-l-lg last:rounded-r-lg">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {PAYMENT_HISTORY.map((row, i) => (
-                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                      <td className="px-3 py-2.5 text-gray-600">{row.date}</td>
-                      <td className="px-3 py-2.5 font-medium text-gray-900">{row.field}</td>
-                      <td className="px-3 py-2.5 text-gray-700">{row.tonnes}</td>
-                      <td className="px-3 py-2.5 text-gray-700">₹{row.rate.toLocaleString()}</td>
-                      <td className="px-3 py-2.5 font-bold text-gray-900">₹{row.total.toLocaleString()}</td>
-                      <td className="px-3 py-2.5 text-gray-600">{row.mode}</td>
-                      <td className="px-3 py-2.5">
-                        <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
-                          row.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                        }`}>{row.status}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-emerald-50">
-                    <td colSpan={4} className="px-3 py-2.5 font-bold text-gray-700">Total Paid</td>
-                    <td className="px-3 py-2.5 font-black text-emerald-700">
-                      ₹{PAYMENT_HISTORY.filter(r => r.status === 'Paid').reduce((a, r) => a + r.total, 0).toLocaleString()}
-                    </td>
-                    <td colSpan={2} />
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+            {!hasFields ? (
+              <div className="text-center py-10 border border-dashed border-gray-300 rounded-xl bg-gray-50">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <IndianRupee className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">No Payments Yet</h3>
+                <p className="text-sm text-gray-500 max-w-xs mx-auto">Register a field and sell biomass to see your earnings here.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-gray-900 text-sm">Payment History</h3>
+                  <span className="text-xs text-gray-400">All amounts in ₹</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-gray-50 border border-gray-100 rounded-lg">
+                        {['Date', 'Field', 'Tonnes', 'Rate/T', 'Total', 'Mode', 'Status'].map(h => (
+                          <th key={h} className="px-3 py-2.5 text-left font-semibold text-gray-600 first:rounded-l-lg last:rounded-r-lg">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {PAYMENT_HISTORY.map((row, i) => (
+                        <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                          <td className="px-3 py-2.5 text-gray-600">{row.date}</td>
+                          <td className="px-3 py-2.5 font-medium text-gray-900">{row.field}</td>
+                          <td className="px-3 py-2.5 text-gray-700">{row.tonnes}</td>
+                          <td className="px-3 py-2.5 text-gray-700">₹{row.rate.toLocaleString()}</td>
+                          <td className="px-3 py-2.5 font-bold text-gray-900">₹{row.total.toLocaleString()}</td>
+                          <td className="px-3 py-2.5 text-gray-600">{row.mode}</td>
+                          <td className="px-3 py-2.5">
+                            <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                              row.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                            }`}>{row.status}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-emerald-50">
+                        <td colSpan={4} className="px-3 py-2.5 font-bold text-gray-700">Total Paid</td>
+                        <td className="px-3 py-2.5 font-black text-emerald-700">
+                          ₹{PAYMENT_HISTORY.filter(r => r.status === 'Paid').reduce((a, r) => a + r.total, 0).toLocaleString()}
+                        </td>
+                        <td colSpan={2} />
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {/* ═══════════ ALERTS TAB (feature #11) ═══════════ */}
         {activeTab === 'alerts' && (
           <div className="p-5 space-y-3">
-            <h3 className="font-bold text-gray-900 text-sm">Recent Notifications</h3>
-            {NOTIFICATIONS.map(n => (
-              <div key={n.id} className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs ${
-                n.type === 'success' ? 'bg-emerald-50 border-emerald-200' :
-                n.type === 'warning' ? 'bg-amber-50 border-amber-200' :
-                n.type === 'info' ? 'bg-blue-50 border-blue-200' :
-                'bg-gray-50 border-gray-200'
+            {!hasFields ? (
+              <div className="text-center py-10 border border-dashed border-gray-300 rounded-xl bg-gray-50">
+                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Bell className="w-8 h-8 text-amber-600" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">No Alerts</h3>
+                <p className="text-sm text-gray-500 max-w-xs mx-auto">You're all caught up! Notifications will appear here when you have activity.</p>
+              </div>
+            ) : (
+              <>
+                <h3 className="font-bold text-gray-900 text-sm">Recent Notifications</h3>
+                {NOTIFICATIONS.map(n => (
+                  <div key={n.id} className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs ${
+                    n.type === 'success' ? 'bg-emerald-50 border-emerald-200' :
+                    n.type === 'warning' ? 'bg-amber-50 border-amber-200' :
+                    n.type === 'info' ? 'bg-blue-50 border-blue-200' :
+                    'bg-gray-50 border-gray-200'
               }`}>
                 <span className="text-base mt-0.5 shrink-0">{n.icon}</span>
                 <div className="flex-1">
@@ -530,26 +618,13 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
                 </div>
               </div>
             ))}
+              </>
+            )}
           </div>
         )}
       </div>
 
-      {/* ── Profile & Logout Card (bug #15) ── */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#0a251c] text-emerald-400 flex items-center justify-center font-black text-base border border-emerald-500/30">
-            {name.charAt(0)}
-          </div>
-          <div>
-            <p className="font-bold text-gray-900 text-sm">{name}</p>
-            <p className="text-xs text-gray-500">{village} · Member since {joinedDate}</p>
-          </div>
-        </div>
-        <button onClick={onLogout}
-          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 border border-red-200 rounded-lg transition-colors cursor-pointer">
-          <LogOut className="w-3.5 h-3.5" /> Logout
-        </button>
-      </div>
+
 
       {/* ── Toast ── */}
       {toast && (
@@ -568,6 +643,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
           onSuccess={() => showToast('Harvest registered successfully!')}
         />
       )}
+      
     </div>
   );
 }

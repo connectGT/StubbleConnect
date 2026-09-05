@@ -1,21 +1,32 @@
-import urllib.request
+﻿import urllib.request
 import json
 
-# Start: Bathinda (30.211, 74.945)
-# End: Talwandi Sabo (29.988, 75.088)
-# OSRM expects: lon,lat
-url = 'http://router.project-osrm.org/route/v1/driving/74.945,30.211;75.088,29.988?overview=full&geometries=geojson'
+routes = [
+    {"id": "TRK-201", "start": "74.945,30.211", "end": "75.088,29.988"},
+    {"id": "TRK-405", "start": "75.390,29.990", "end": "74.945,30.211"},
+    {"id": "TRK-708", "start": "75.240,30.270", "end": "75.000,30.150"}
+]
 
-try:
-    with urllib.request.urlopen(url) as response:
-        data = json.loads(response.read().decode())
+results = {}
+for r in routes:
+    url = f"http://router.project-osrm.org/route/v1/driving/{r['start']};{r['end']}?overview=full&geometries=geojson"
+    try:
+        req = urllib.request.urlopen(url)
+        data = json.loads(req.read())
+        # OSRM returns [lon, lat], Leaflet wants [lat, lon]
         coords = data['routes'][0]['geometry']['coordinates']
-        # OSRM gives [lon, lat], we need [lat, lon]
-        route_path = [[c[1], c[0]] for c in coords]
+        latlngs = [[c[1], c[0]] for c in coords]
         
-        # Save to a file we can inspect
-        with open('route_coords.json', 'w') as f:
-            json.dump(route_path, f)
-        print(f'Successfully fetched {len(route_path)} coordinates along real roads.')
-except Exception as e:
-    print(f'Error: {e}')
+        # Calculate approximate duration in seconds
+        duration = data['routes'][0]['duration']
+        
+        results[r['id']] = {
+            "path": latlngs,
+            "duration": duration
+        }
+        print(f"Fetched {r['id']} with {len(latlngs)} points, duration: {duration}s")
+    except Exception as e:
+        print(f"Error fetching {r['id']}: {e}")
+
+with open('route_coords.json', 'w') as f:
+    json.dump(results, f)

@@ -90,60 +90,68 @@ export default function FarmerLoginPage({ onLogin }) {
 
   const t = T[lang];
 
-  const handleSendOtp = (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     setError('');
     if (phone.length !== 10) return;
     if (mode === 'signup' && !name.trim()) { setError('Please enter your name'); return; }
     if (mode === 'signup' && !village) { setError('Please select your village'); return; }
+    
     setLoading(true);
-    setTimeout(() => { setLoading(false); setStep('otp'); }, 1200);
+    try {
+      if (mode === 'signup') {
+        // Register first
+        const res = await fetch('http://localhost:8000/api/v1/farmers/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name.trim(), phone, village, district: 'Bathinda', state: 'Punjab' })
+        });
+        const data = await res.json();
+        if (res.ok && data.status !== 'error') {
+          // Now send OTP
+          await fetch(`http://localhost:8000/api/v1/farmers/send-otp?phone=${phone}`, { method: 'POST' });
+          setStep('otp');
+        } else {
+          setError(data.detail || 'Registration failed');
+        }
+      } else {
+        // Login flow
+        const res = await fetch(`http://localhost:8000/api/v1/farmers/send-otp?phone=${phone}`, { method: 'POST' });
+        if (res.ok) {
+          setStep('otp');
+        } else {
+          const data = await res.json();
+          setError(data.detail || 'Failed to send OTP. Please sign up if you do not have an account.');
+        }
+      }
+    } catch (err) {
+      setError('Network error. Is the backend running?');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerify = (e) => {
+  const handleVerify = async (e) => {
     e.preventDefault();
     if (otp.length !== 6) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      // Build user object
-      let user;
-      if (mode === 'signup') {
-        user = {
-          name: name.trim(),
-          phone,
-          village,
-          fpoId: generateFpoId(),
-          joinedDate: new Date().toLocaleDateString('en-IN'),
-          tier: 'Green',
-        };
-        // Save to localStorage
-        localStorage.setItem('stubble_farmer_user', JSON.stringify(user));
+    try {
+      const res = await fetch('http://localhost:8000/api/v1/farmers/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, otp })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onLogin(data.data);
       } else {
-        // Login — try to load from localStorage, else create basic profile from phone
-        try {
-          const saved = localStorage.getItem('stubble_farmer_user');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            user = parsed;
-          } else {
-            // First time login with no prior signup — create minimal profile
-            user = {
-              name: 'Farmer',
-              phone,
-              village: 'Punjab',
-              fpoId: generateFpoId(),
-              joinedDate: new Date().toLocaleDateString('en-IN'),
-              tier: 'Green',
-            };
-            localStorage.setItem('stubble_farmer_user', JSON.stringify(user));
-          }
-        } catch {
-          user = { name: 'Farmer', phone, village: 'Punjab', fpoId: generateFpoId(), joinedDate: new Date().toLocaleDateString('en-IN'), tier: 'Green' };
-        }
+        setError(data.detail || 'Invalid OTP');
       }
-      onLogin(user);
-    }, 1000);
+    } catch (err) {
+      setError('Network error.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const switchMode = (m) => {

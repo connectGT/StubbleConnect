@@ -20,7 +20,11 @@ import {
   ChevronRight,
   Search,
   CheckCircle2,
-  BarChart3
+  BarChart3,
+  MapPin,
+  Leaf,
+  Shield,
+  TrendingUp
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -64,68 +68,38 @@ export default function Sidebar({
   // Option 2: Minimal / Beginner-Friendly Sidebar (Farmer)
   // -------------------------------------------------------------
   const farmerNavItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'dashboard', label: 'Dashboard', icon: MapPin },
     {
-      id: 'fields_group',
-      label: 'Fields',
-      icon: Wheat,
+      id: 'fields_accordion',
+      label: 'My Fields',
+      icon: Leaf,
       subItems: [
-        { id: 'all_fields', label: 'All Fields' },
-        { id: 'add_field', label: 'Add Field' },
+        { id: 'overview', label: 'All Fields' },
+        { id: 'report_harvest', label: 'Report Harvest' },
       ]
     },
     {
-      id: 'clusters_group',
-      label: 'Clusters',
-      icon: Share2,
+      id: 'risk_accordion',
+      label: 'My Risk Status',
+      icon: Shield,
       subItems: [
-        { id: 'all_clusters', label: 'All Clusters' },
-        { id: 'create_clusters', label: 'Create Clusters' },
+        { id: 'risk_level', label: 'View Risk Level' },
       ]
     },
     {
-      id: 'buyers_group',
-      label: 'Buyers',
-      icon: Building2,
+      id: 'reports',
+      label: 'Payments & Reports',
+      icon: TrendingUp,
       subItems: [
-        { id: 'all_buyers', label: 'All Buyers' },
-        { id: 'find_buyer', label: 'Find Buyer' },
+        { id: 'payments', label: 'View Payments' },
+        { id: 'receipts', label: 'Download Receipts' },
       ]
     },
-    {
-      id: 'routes_group',
-      label: 'Routes',
-      icon: Route,
-      subItems: [
-        { id: 'planned_routes', label: 'Planned Routes' },
-        { id: 'active_routes', label: 'Active Routes' },
-      ]
-    },
-    {
-      id: 'risk_group',
-      label: 'Risk Map',
-      icon: Flame,
-      subItems: [
-        { id: 'risk_overview', label: 'Risk Overview' },
-        { id: 'high_risk', label: 'High Risk Areas' },
-      ]
-    },
-    {
-      id: 'reports_group',
-      label: 'Reports',
-      icon: FileText,
-      subItems: [
-        { id: 'overview', label: 'Overview' },
-        { id: 'download_reports', label: 'Download Reports' },
-      ]
-    },
-    { id: 'alerts', label: 'Alerts', icon: Bell, badge: '3' },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'alerts', label: 'Alerts', icon: Bell, badge: '3' }
   ];
 
   const farmerQuickActions = [
     { id: 'register_field', label: 'Register Field', icon: Plus },
-    { id: 'add_buyer', label: 'Add Buyer', icon: Plus },
   ];
 
   // Determine active configuration based on role
