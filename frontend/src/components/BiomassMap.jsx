@@ -22,6 +22,8 @@ import {
   Check
 } from 'lucide-react';
 
+const defaultCenter = [30.211, 74.9455];
+
 // Helper component to center map when cluster changes
 function MapViewController({ center, zoom }) {
   const map = useMap();
@@ -130,7 +132,6 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Center around Bathinda / South-West Punjab
-  const defaultCenter = [30.211, 74.9455];
   const defaultZoom = 10;
 
   // Custom DivIcon creator for Cluster Badges (e.g., 8, 7, 9, 6, 5)
