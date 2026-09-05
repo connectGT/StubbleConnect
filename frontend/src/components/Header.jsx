@@ -57,19 +57,6 @@ export default function Header({
 
       {/* Right Controls */}
       <div className="flex items-center gap-3 md:gap-4">
-        {/* Prominent Biogas Plant Buyer Portal Button */}
-        {userRole !== 'buyer' && onSwitchRole && (
-          <button
-            onClick={() => onSwitchRole('buyer')}
-            className="px-3.5 py-1.5 bg-[#0a251c] hover:bg-[#12382b] text-emerald-400 hover:text-white border border-emerald-500/40 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer group hover:scale-105"
-            title="Switch to Biogas Plant Buyer Command Portal"
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="hidden sm:inline">Biogas Plant Buyer Portal</span>
-            <span className="sm:hidden">Buyer Mode</span>
-            <span className="text-base">🏭</span>
-          </button>
-        )}
         {/* Weather Widget — hidden in farmer mode on small screens */}
         <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-gray-50/80 rounded-lg border border-gray-100">
           <CloudSun className="w-5 h-5 text-amber-500" />

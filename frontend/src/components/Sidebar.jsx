@@ -257,37 +257,7 @@ export default function Sidebar({
 
         {/* Bottom User Role Toggle */}
         <div className="p-3 border-t border-[#12382b] space-y-2">
-          {/* 1. Truck Driver Mode Launcher Button (ABOVE) */}
-          <button
-            onClick={() => setUserRole('driver')}
-            className="w-full py-2.5 px-3 bg-gradient-to-r from-[#071c15] via-[#0e2c21] to-[#071c15] hover:from-[#12382b] hover:to-[#0a251c] border border-emerald-500/50 rounded-xl text-xs font-black text-emerald-400 hover:text-white shadow-lg flex items-center justify-between transition-all group cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-base">🚚</span>
-              <div className="text-left">
-                <div className="leading-tight text-white font-bold">Truck Driver Mode</div>
-                <div className="text-[9px] text-[#6b8e81] font-normal">Parali Pickup & GPS Navigation</div>
-              </div>
-            </div>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          </button>
-
-          {/* 2. Biogas Plant Buyer Portal Launcher Button (BELOW) */}
-          <button
-            onClick={() => setUserRole('buyer')}
-            className="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-950 via-[#0a251c] to-[#0f3427] hover:from-[#12382b] hover:to-[#0a251c] border border-emerald-500/50 rounded-xl text-xs font-black text-emerald-400 hover:text-white shadow-lg flex items-center justify-between transition-all group cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-base">🏭</span>
-              <div className="text-left">
-                <div className="leading-tight text-white font-bold">Biogas Plant Buyer</div>
-                <div className="text-[9px] text-[#6b8e81] font-normal">CBG Procurement Portal</div>
-              </div>
-            </div>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          </button>
-
-          {/* 3. Admin / Farmer Toggle */}
+          {/* Admin / Farmer Toggle */}
           <div className="bg-[#071c15] border border-[#133d2e] rounded-xl p-2.5 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-emerald-800/60 border border-emerald-600/40 flex items-center justify-center text-emerald-300">
