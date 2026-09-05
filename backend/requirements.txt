@@ -13,3 +13,4 @@ psycopg2-binary==2.9.9
 SQLAlchemy==2.0.35
 GeoAlchemy2==0.15.2
 websockets==13.1
+scipy==1.14.1

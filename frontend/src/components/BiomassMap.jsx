@@ -21,10 +21,6 @@ import {
   Flame,
   Check
 } from 'lucide-react';
-import {
-  buyersData,
-  routesData
-} from '../data/mockData';
 
 // Helper component to center map when cluster changes
 function MapViewController({ center, zoom }) {

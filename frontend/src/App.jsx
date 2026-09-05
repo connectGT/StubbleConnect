@@ -11,7 +11,7 @@ import FarmerDashboard from './components/FarmerDashboard';
 import FarmerLoginPage from './components/FarmerLoginPage';
 import BuyerPanelApp from './buyer_panel/BuyerPanelApp';
 import DriverPanelApp from './driver_panel/DriverPanelApp';
-import { statsData, clustersData, buyersData, routesData } from './data/mockData';
+// Removed mockData import
 
 export default function App() {
   // Auth state — load from localStorage for persistence
@@ -49,13 +49,18 @@ export default function App() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  
-  // Selected Cluster (Defaults to Cluster #12 from reference image)
-  const defaultCluster = clustersData.find((c) => c.number === 12) || clustersData[0];
-  const [selectedCluster, setSelectedCluster] = useState(defaultCluster);
+  // Selected Cluster
+  const [selectedCluster, setSelectedCluster] = useState(null);
 
   // Live Stats State
-  const [stats, setStats] = useState(statsData);
+  const [stats, setStats] = useState([
+    { id: 'total_fields', title: 'Total Registered Fields', value: '0', subtext: 'Farms registered', trend: 'up', icon: 'Leaf', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+    { id: 'total_biomass', title: 'Est. Biomass Available', value: '0', unit: 'T', subtext: 'Ready for harvest', trend: 'up', icon: 'Package', iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
+    { id: 'active_clusters', title: 'Active Field Clusters', value: '0', subtext: 'Grouped collection zones', trend: 'up', icon: 'Users', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', trendType: 'info' },
+    { id: 'routes_planned', title: 'Logistics Routes Planned', value: '0', subtext: 'Pending dispatch', trend: 'down', icon: 'Truck', iconBg: 'bg-cyan-50', iconColor: 'text-cyan-600', trendType: 'teal' },
+    { id: 'high_risk', title: 'High Risk Areas', value: '0', subtext: 'Immediate action required', trend: 'down', icon: 'Flame', iconBg: 'bg-red-50', iconColor: 'text-red-600', isAlert: true },
+    { id: 'daily_capacity', title: 'Buyer Processing Cap.', value: '0', unit: 'T', subtext: 'Across active plants', trend: 'up', icon: 'Handshake', iconBg: 'bg-purple-50', iconColor: 'text-purple-600' }
+  ]);
 
   React.useEffect(() => {
     // Fetch live dashboard KPIs from FastAPI
@@ -242,10 +247,6 @@ export default function App() {
                 onViewAllRoutes={() => setListViewModalType('routes')}
                 onViewAllBuyers={() => setListViewModalType('buyers')}
                 onSelectRoute={(route) => {
-                  const matchedCl = clustersData.find(
-                    (c) => c.name.toLowerCase() === route.cluster.toLowerCase()
-                  );
-                  if (matchedCl) setSelectedCluster(matchedCl);
                   showToast(`Inspecting ${route.code} -> ${route.buyer}`);
                 }}
                 onSelectBuyer={(buyer) => {

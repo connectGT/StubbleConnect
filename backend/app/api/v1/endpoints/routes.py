@@ -23,25 +23,7 @@ def get_all_routes(db: Session = Depends(get_db)):
             "path": r.path_coords
         })
         
-    if not data:
-        # Seed default routes
-        defaults = [
-            {
-                "code": "Route #R-08", "cluster_id": "Cluster #12", "buyer_id": "GreenFuel Plant", 
-                "stops": 8, "tonnage": 42.3, "status": "In Progress", 
-                "path_coords": [[30.18, 74.58], [30.20, 74.75], [30.22, 74.98], [30.232, 75.015]]
-            },
-            {
-                "code": "Route #R-09", "cluster_id": "Cluster #09", "buyer_id": "EcoHeat Industries", 
-                "stops": 7, "tonnage": 35.7, "status": "Scheduled", 
-                "path_coords": [[30.232, 75.015], [30.17, 75.25], [30.08, 74.91], [30.02, 75.41], [30.125, 75.445]]
-            }
-        ]
-        for d in defaults:
-            db.add(Route(**d))
-        db.commit()
-        return get_all_routes(db)
-        
+
     # Standardize output to match frontend mockup fields
     for d in data:
         # Quick hack to inject names instead of IDs for the MVP since we seeded with names
@@ -52,14 +34,10 @@ def get_all_routes(db: Session = Depends(get_db)):
 
 @router.post("/optimize")
 def generate_optimal_routes(db: Session = Depends(get_db)):
-    import sys
-    import os
     from sqlalchemy import func
     import json
     
-    # Append root directory to path to import ml_engine
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../")))
-    from ml_engine.routing.vrp_solver import solve_capacitated_vrp
+    from app.ml_engine.routing.vrp_solver import solve_capacitated_vrp
     from app.db.models import Cluster, Buyer
     
     # 1. Fetch Clusters (Treat clusters as pickup stops)

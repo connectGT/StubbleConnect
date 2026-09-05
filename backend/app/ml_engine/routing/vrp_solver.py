@@ -21,10 +21,14 @@ def solve_capacitated_vrp(
         route_path = [[depot["latitude"], depot["longitude"]]]
 
         while unvisited:
-            # Find nearest stop that fits capacity
             candidates = [s for s in unvisited if current_load + s["biomass_tonnes"] <= vehicle_capacity_tonnes]
             if not candidates:
-                break
+                if current_load == 0.0:
+                    # If even an empty vehicle can't fit the stop, just pick the smallest one and exceed capacity
+                    # to prevent infinite loop.
+                    candidates = [min(unvisited, key=lambda s: s["biomass_tonnes"])]
+                else:
+                    break
 
             nearest_stop = min(
                 candidates,

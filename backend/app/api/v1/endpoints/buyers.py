@@ -30,17 +30,6 @@ def get_all_buyers(db: Session = Depends(get_db)):
             "contact": b.contact
         })
         
-    if not data:
-        # Seed default buyers
-        defaults = [
-            {"plant_name": "GreenFuel Plant", "location": "Bathinda", "current_stored_tonnes": 420.0, "daily_capacity_tonnes": 500.0, "geom": "SRID=4326;POINT(75.015 30.232)", "facility_type": "Biogas & Bio-CNG", "contact": "+91 98765-43210"},
-            {"plant_name": "EcoHeat Industries", "location": "Mansa", "current_stored_tonnes": 340.0, "daily_capacity_tonnes": 500.0, "geom": "SRID=4326;POINT(75.445 30.125)", "facility_type": "Biomass Pellet Plant", "contact": "+91 98123-45678"},
-        ]
-        for d in defaults:
-            db.add(Buyer(**d))
-        db.commit()
-        return get_all_buyers(db)
-        
     return {"status": "success", "count": len(data), "data": data}
 
 @router.post("/register")

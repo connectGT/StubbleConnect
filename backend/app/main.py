@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.v1.endpoints import fields, clusters, buyers, routes, analytics, websockets, farmers, trucks
+from app.api.v1.endpoints import fields, clusters, buyers, routes, analytics, websockets, farmers, trucks, seed
 import asyncio
 
 from app.db.database import engine, Base
@@ -38,6 +38,7 @@ app.include_router(analytics.router, prefix=settings.API_V1_STR)
 app.include_router(websockets.router, prefix=settings.API_V1_STR)
 app.include_router(farmers.router, prefix=settings.API_V1_STR)
 app.include_router(trucks.router, prefix=settings.API_V1_STR)
+app.include_router(seed.router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 def root():

@@ -30,18 +30,7 @@ def get_all_fields(db: Session = Depends(get_db)):
             "cluster": f.cluster.name if f.cluster else "Unassigned"
         })
         
-    # Seed default data if empty so the map has something to show initially
-    if not data:
-        defaults = [
-            {"id": "f1", "farmer_name": "Harjit Singh", "village": "Talwandi", "acres": 12.0, "biomass": 6.2, "geom": "SRID=4326;POINT(74.94 30.23)", "district": "Bathinda", "state": "Punjab", "phone": "123", "crop_type": "Paddy", "harvest_date": "2025-08-20"},
-            {"id": "f2", "farmer_name": "Gurpreet Kaur", "village": "Bhucho Mandi", "acres": 9.0, "biomass": 4.8, "geom": "SRID=4326;POINT(74.97 30.28)", "district": "Bathinda", "state": "Punjab", "phone": "123", "crop_type": "Paddy", "harvest_date": "2025-08-20"},
-        ]
-        for d in defaults:
-            new_f = Field(**d)
-            db.add(new_f)
-        db.commit()
-        return get_all_fields(db)
-        
+
     return {"status": "success", "count": len(data), "data": data}
 
 @router.post("/register")

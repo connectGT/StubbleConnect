@@ -26,9 +26,13 @@ manager = ConnectionManager()
 def interpolate_points(p1, p2, fraction):
     return [p1[0] + (p2[0] - p1[0]) * fraction, p1[1] + (p2[1] - p1[1]) * fraction]
 
-# Load Real OSRM Road Paths — file is at project root (sih/route_coords.json)
-# __file__ = sih/backend/app/api/v1/endpoints/websockets.py  →  parents[5] = sih/
-_route_file = Path(__file__).parents[5] / 'route_coords.json'
+import os
+# Try to find route_coords.json in backend directory or project root
+_route_file = Path(__file__).parents[4] / 'route_coords.json'
+if not _route_file.exists():
+    _route_file = Path(__file__).parents[5] / 'route_coords.json'
+if not _route_file.exists():
+    _route_file = Path('/app/route_coords.json')
 with open(_route_file, 'r') as f:
     real_routes = json.load(f)
 

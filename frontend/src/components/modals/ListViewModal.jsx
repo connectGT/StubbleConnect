@@ -15,18 +15,21 @@ import {
   Cpu,
   Truck
 } from 'lucide-react';
-import {
-  recentActivities,
-  clustersData
-} from '../../data/mockData';
 
 export default function ListViewModal({ type, onClose, onSelectCluster }) {
   const [routes, setRoutes] = useState([]);
   const [buyers, setBuyers] = useState([]);
   const [fields, setFields] = useState([]);
   const [clusters, setClusters] = useState([]);
+  const [activities, setActivities] = useState([]);
 
   useEffect(() => {
+    if (type === 'activity') {
+      fetch('http://localhost:8000/api/v1/analytics/activity-feed')
+        .then(res => res.json())
+        .then(data => setActivities(data))
+        .catch(err => console.error(err));
+    }
     if (type === 'routes') {
       fetch('http://localhost:8000/api/v1/routes')
         .then(res => res.json())
@@ -42,7 +45,7 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
         .then(res => res.json())
         .then(data => { if(data.status === 'success') setFields(data.data); });
     }
-    if (type === 'clusters') {
+    if (type === 'clusters' || type === 'risk') {
       fetch('http://localhost:8000/api/v1/clusters')
         .then(res => res.json())
         .then(data => { if(data.status === 'success') setClusters(data.data); });
@@ -90,19 +93,19 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
         <div className="p-6 overflow-y-auto space-y-4 text-xs">
           {type === 'activity' && (
             <div className="space-y-3">
-              {[...recentActivities,
-                { id: 'act-5', title: 'Route #R-07 completed delivery at EcoHeat Mansa', subtitle: '40.1 Tonnes delivered', time: '42 mins ago' },
-                { id: 'act-6', title: 'Cluster #09 formed with 7 farms in Mansa', subtitle: '35.7 Tonnes total', time: '1 hr ago' },
-                { id: 'act-7', title: 'Buyer Punjab Biomass Ltd updated storage capacity', subtitle: '500 Tonnes quota', time: '2 hrs ago' }
-              ].map((act, i) => (
-                <div key={i} className="flex items-start justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                  <div>
-                    <div className="font-bold text-gray-900">{act.title}</div>
-                    {act.subtitle && <div className="text-gray-500 mt-0.5">{act.subtitle}</div>}
+              {activities.length === 0 ? (
+                <div className="text-center p-4 text-gray-500 italic">No recent activity found.</div>
+              ) : (
+                activities.map((act, i) => (
+                  <div key={i} className="flex items-start justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div>
+                      <div className="font-bold text-gray-900">{act.title}</div>
+                      {act.subtitle && <div className="text-gray-500 mt-0.5">{act.subtitle}</div>}
+                    </div>
+                    <span className="text-gray-400 shrink-0 text-[11px]">{act.time}</span>
                   </div>
-                  <span className="text-gray-400 shrink-0 text-[11px]">{act.time}</span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
@@ -264,7 +267,7 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
               <p className="text-gray-600">
                 5 High-Risk Agricultural Clusters identified with less than 48 hours remaining in their harvest burn window:
               </p>
-              {clustersData
+              {clusters
                 .filter((c) => c.riskScore >= 65)
                 .map((cl) => (
                   <div
