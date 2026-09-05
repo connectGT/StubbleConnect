@@ -3,7 +3,6 @@ import {
   MapContainer,
   TileLayer,
   Marker,
-  Popup,
   Polygon,
   Polyline,
   Tooltip,
@@ -15,10 +14,6 @@ import {
   Maximize2,
   Minimize2,
   ChevronDown,
-  Factory,
-  Sparkles,
-  MapPin,
-  Flame,
   Check
 } from 'lucide-react';
 
@@ -38,13 +33,6 @@ function MapViewController({ center, zoom }) {
 }
 
 export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpenBuyerDetails, onOpenLogistics }) {
-  const [mapZoom, setMapZoom] = useState(9);
-  const [isFullScreen, setIsFullScreen] = useState(false);
-  const [showFields, setShowFields] = useState(true);
-  const [showClusters, setShowClusters] = useState(true);
-  const [showBuyers, setShowBuyers] = useState(true);
-  const [showRoutes, setShowRoutes] = useState(true);
-
   // Live Data States
   const [localClusters, setLocalClusters] = useState([]);
   const [localFields, setLocalFields] = useState([]);
@@ -54,53 +42,61 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
   const [truckPaths, setTruckPaths] = useState({});
 
   useEffect(() => {
-    // Fetch Clusters
-    fetch('http://localhost:8000/api/v1/clusters')
-      .then(res => res.json())
-      .then(data => {
-        if(data.status === 'success') {
-          const coloredData = data.data.map((cl, i) => ({
-            ...cl,
-            color: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899'][i % 5],
-            borderColor: ['#059669', '#d97706', '#2563eb', '#7c3aed', '#db2777'][i % 5]
-          }));
-          setLocalClusters(coloredData);
-        }
-      })
-      .catch(console.error);
+    const fetchData = () => {
+      // Fetch Clusters
+      fetch('http://localhost:8000/api/v1/clusters')
+        .then(res => res.json())
+        .then(data => {
+          if(data.status === 'success') {
+            const coloredData = data.data.map((cl, i) => ({
+              ...cl,
+              color: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899'][i % 5],
+              borderColor: ['#059669', '#d97706', '#2563eb', '#7c3aed', '#db2777'][i % 5]
+            }));
+            setLocalClusters(coloredData);
+          }
+        });
 
-    // Fetch Fields
-    fetch('http://localhost:8000/api/v1/fields')
-      .then(res => res.json())
-      .then(data => {
-        if(data.status === 'success') setLocalFields(data.data);
-      })
-      .catch(console.error);
+      // Fetch Fields
+      fetch('http://localhost:8000/api/v1/fields')
+        .then(res => res.json())
+        .then(data => {
+          if(data.status === 'success') setLocalFields(data.data);
+        });
 
-    // Fetch Buyers
-    fetch('http://localhost:8000/api/v1/buyers')
-      .then(res => res.json())
-      .then(data => {
-        if(data.status === 'success') setLocalBuyers(data.data);
-      })
-      .catch(console.error);
+      // Fetch Buyers
+      fetch('http://localhost:8000/api/v1/buyers')
+        .then(res => res.json())
+        .then(data => {
+          if(data.status === 'success') setLocalBuyers(data.data);
+        });
 
-    // Fetch Routes
-    fetch('http://localhost:8000/api/v1/routes')
-      .then(res => res.json())
-      .then(data => {
-        if(data.status === 'success') setLocalRoutes(data.data);
-      })
-      .catch(console.error);
-      
-    // Fetch Truck Paths from backend for polyline overlay
-    fetch('http://localhost:8000/api/v1/trucks/paths')
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'success') setTruckPaths(data.data);
-      })
-      .catch(() => {});
-      
+      // Fetch Routes
+      fetch('http://localhost:8000/api/v1/routes')
+        .then(res => res.json())
+        .then(data => {
+          if(data.status === 'success') setLocalRoutes(data.data);
+        });
+
+      // Fetch Truck Paths from backend for polyline overlay
+      fetch('http://localhost:8000/api/v1/trucks/paths')
+        .then(res => res.json())
+        .then(data => {
+          if(data.status === 'success') {
+            const pathMap = {};
+            data.data.forEach(t => {
+              if (t.path && t.path.length > 0) {
+                pathMap[t.id] = t.path;
+              }
+            });
+            setTruckPaths(pathMap);
+          }
+        });
+    };
+
+    fetchData();
+    window.addEventListener('refresh-dashboard-data', fetchData);
+    
     // WebSocket for Live Tracking
     const ws = new WebSocket('ws://localhost:8000/api/v1/ws/tracking');
     ws.onmessage = (event) => {
@@ -113,12 +109,13 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
       }
     };
     
-    return () => ws.close();
+    return () => {
+      window.removeEventListener('refresh-dashboard-data', fetchData);
+      ws.close();
+    };
   }, []);
 
-  const toggleFullScreen = () => {
-    setIsFullScreen(!isFullScreen);
-  };
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapType, setMapType] = useState('satellite'); // 'satellite' | 'street' | 'terrain'
   const [showDropdown, setShowDropdown] = useState(false);
   const [showLayersModal, setShowLayersModal] = useState(false);
@@ -129,7 +126,6 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
     routes: true,
     riskHeat: false
   });
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Center around Bathinda / South-West Punjab
   const defaultZoom = 10;
@@ -189,7 +185,7 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
   };
 
   // Custom DivIcon for Biomass Buyer Factory
-  const createBuyerIcon = (name) => {
+  const createBuyerIcon = () => {
     return L.divIcon({
       className: 'custom-leaflet-div-icon',
       html: `
@@ -385,6 +381,20 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
                     className="accent-emerald-600 rounded"
                   />
                 </label>
+                <label className="flex items-center justify-between text-gray-700 cursor-pointer">
+                  <span>Risk Hotspots</span>
+                  <input
+                    type="checkbox"
+                    checked={layerVisibility.riskHeat}
+                    onChange={(e) =>
+                      setLayerVisibility({
+                        ...layerVisibility,
+                        riskHeat: e.target.checked
+                      })
+                    }
+                    className="accent-red-600 rounded"
+                  />
+                </label>
               </div>
             </div>
           )}
@@ -486,11 +496,12 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
                     <div className="text-xs font-sans">
                       <div className="font-bold text-gray-900">{cl.name}</div>
                       <div className="text-gray-600">
-                        {cl.farmsCount} Farms &bull; {cl.totalBiomass} T Biomass
+                        {cl.farmsCount ?? cl.farms_count ?? 0} Farms &bull; {cl.totalBiomass ?? cl.total_biomass ?? 0} T Biomass
                       </div>
                       <div className="text-red-600 font-semibold mt-0.5">
-                        Risk Score: {cl.riskScore}/100
+                        Risk Score: {cl.riskScore ?? 0}/100
                       </div>
+                      <div className="text-[10px] text-blue-600 font-bold mt-1 uppercase">Click to inspect cluster &rarr;</div>
                     </div>
                   </Tooltip>
                 </Polygon>
@@ -504,12 +515,41 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
                   }}
                 >
                   <Tooltip direction="top" offset={[0, -10]}>
-                    <span className="font-bold">{cl.name}</span>
+                    <div className="text-xs font-sans text-center">
+                      <div className="font-bold">{cl.name}</div>
+                      <div className="text-[10px] text-emerald-600 font-bold">Click to select</div>
+                    </div>
                   </Tooltip>
                 </Marker>
               </React.Fragment>
             );
           })}
+
+        {/* Risk Hotspots Overlay */}
+        {layerVisibility.riskHeat &&
+          localClusters
+            .filter((cl) => (cl.riskScore ?? 0) >= 65 && cl.polygon && cl.polygon.length > 0)
+            .map((cl) => (
+              <Polygon
+                key={`risk-heat-${cl.id}`}
+                positions={cl.polygon}
+                pathOptions={{
+                  color: '#ef4444',
+                  fillColor: '#dc2626',
+                  fillOpacity: 0.45,
+                  weight: 3,
+                }}
+                eventHandlers={{
+                  click: () => setSelectedCluster(cl),
+                }}
+              >
+                <Tooltip sticky>
+                  <div className="text-xs font-sans font-bold text-red-700">
+                    🔥 HIGH RISK THERMAL HOTSPOT: {cl.name} (Risk: {cl.riskScore}/100)
+                  </div>
+                </Tooltip>
+              </Polygon>
+            ))}
 
         {/* Planned Logistics Routes (Dashed Lines) */}
         {layerVisibility.routes &&
@@ -519,9 +559,14 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
               positions={rt.path}
               pathOptions={{
                 color: '#38bdf8', // Cyan / Light blue
-                weight: 3.5,
+                weight: 4,
                 dashArray: '6, 6',
-                opacity: 0.9,
+                opacity: 0.95,
+              }}
+              eventHandlers={{
+                click: () => {
+                  if (onOpenLogistics) onOpenLogistics(rt);
+                }
               }}
             >
               <Tooltip sticky>
@@ -533,6 +578,7 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
                   <div className="text-gray-600">
                     {rt.stops} Stops &bull; {rt.tonnage} Tonnes
                   </div>
+                  <div className="text-[10px] text-cyan-600 font-bold mt-1 uppercase">Click to inspect route in Logistics Modal &rarr;</div>
                 </div>
               </Tooltip>
             </Polyline>
@@ -551,10 +597,10 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
             >
               <Tooltip direction="top" offset={[0, -5]}>
                 <div className="text-xs font-sans">
-                  <div className="font-bold text-emerald-800">{f.name}</div>
-                  <div className="text-gray-700">{f.farmer}</div>
+                  <div className="font-bold text-emerald-800">{f.name || f.farmer_name || 'Farm Field'}</div>
+                  <div className="text-gray-700">{f.farmer || f.farmer_name || 'Farmer'}</div>
                   <div className="text-gray-500">
-                    {f.village} &bull; {f.acres} Acres &bull; {f.biomass}
+                    {f.village} &bull; {f.acres || f.area_acres || 0} Acres &bull; {f.biomass || f.biomass_est || 0} Tonnes
                   </div>
                   <div className="text-[10px] text-emerald-600 font-bold mt-1 uppercase">Click for Fields Directory &rarr;</div>
                 </div>
@@ -568,7 +614,7 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
             <Marker
               key={b.id}
               position={b.coords}
-              icon={createBuyerIcon(b.name)}
+              icon={createBuyerIcon()}
               eventHandlers={{
                 click: () => onOpenBuyerDetails && onOpenBuyerDetails(b),
               }}
@@ -576,10 +622,11 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
               <Tooltip direction="top" offset={[0, -10]}>
                 <div className="text-xs font-sans">
                   <div className="font-bold text-red-700">{b.name}</div>
-                  <div className="text-gray-600">{b.type}</div>
+                  <div className="text-gray-600">{b.type} &bull; {b.location}</div>
                   <div className="text-gray-700 font-semibold mt-0.5">
                     Capacity: {b.currentCapacity} / {b.maxCapacity} T ({b.percentage}%)
                   </div>
+                  <div className="text-[10px] text-red-600 font-bold mt-1 uppercase">Click for Off-Taker Details &rarr;</div>
                 </div>
               </Tooltip>
             </Marker>

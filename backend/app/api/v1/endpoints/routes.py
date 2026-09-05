@@ -11,24 +11,21 @@ def get_all_routes(db: Session = Depends(get_db)):
     
     data = []
     for r in routes:
+        b_name = r.buyer_id if r.buyer_id else "EcoPower Punjab (Demo Depot)"
+        b_loc = "Bathinda" if any(x in b_name for x in ["Bathinda", "GreenFuel", "EcoPower"]) else "Mansa"
         data.append({
             "id": r.id,
             "code": r.code,
-            "cluster": r.cluster_id, # Can be joined to get name later
-            "buyer": r.buyer_id,     # Can be joined to get name later
-            "buyerLocation": "Varies", 
+            "cluster": r.cluster_id,
+            "buyer": b_name,
+            "buyerLocation": b_loc,
+            "buyer_location": b_loc,
             "stops": r.stops,
+            "stops_count": r.stops,
             "tonnage": r.tonnage,
             "status": r.status,
             "path": r.path_coords
         })
-        
-
-    # Standardize output to match frontend mockup fields
-    for d in data:
-        # Quick hack to inject names instead of IDs for the MVP since we seeded with names
-        d["buyer"] = d["buyer"] if d["buyer"] else "EcoHeat Industries"
-        d["buyerLocation"] = "Bathinda" if "GreenFuel" in d["buyer"] else "Mansa"
         
     return {"status": "success", "count": len(data), "data": data}
 
@@ -64,8 +61,8 @@ def generate_optimal_routes(db: Session = Depends(get_db)):
     depot = {
         "id": buyer_model.id,
         "name": buyer_model.plant_name,
-        "latitude": b_lat,
-        "longitude": b_lng
+        "latitude": b_lat if b_lat is not None else 30.22,
+        "longitude": b_lng if b_lng is not None else 74.98
     }
     
     # Format pickup stops from clusters
@@ -74,13 +71,17 @@ def generate_optimal_routes(db: Session = Depends(get_db)):
         pickup_stops.append({
             "id": c.id,
             "name": c.name,
-            "latitude": lat,
-            "longitude": lng,
-            "biomass_tonnes": c.total_biomass
+            "latitude": lat if lat is not None else 30.22,
+            "longitude": lng if lng is not None else 74.98,
+            "biomass_tonnes": float(c.total_biomass or 10.0)
         })
         
+    # Dynamically scale vehicle capacity (150T-200T default, or >= 125% of highest single cluster demand)
+    max_cluster_biomass = max([p["biomass_tonnes"] for p in pickup_stops], default=0.0)
+    effective_capacity = max(150.0, max_cluster_biomass * 1.25)
+    
     # Run VRP solver
-    generated_routes = solve_capacitated_vrp(depot, pickup_stops, vehicle_capacity_tonnes=100.0)
+    generated_routes = solve_capacitated_vrp(depot, pickup_stops, vehicle_capacity_tonnes=effective_capacity)
     
     # Clear old routes
     db.query(Route).delete()

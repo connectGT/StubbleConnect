@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   Leaf, Phone, ShieldCheck, ArrowRight, Users,
-  ChevronLeft, Eye, EyeOff, UserPlus, LogIn, MapPin
+  ChevronLeft, Eye, EyeOff, UserPlus, LogIn, MapPin,
+  ArrowLeft
 } from 'lucide-react';
 import RegisterOnBehalfModal from './modals/RegisterOnBehalfModal';
 
@@ -71,11 +72,7 @@ const T = {
   },
 };
 
-function generateFpoId() {
-  return '#' + (88000 + Math.floor(Math.random() * 999));
-}
-
-export default function FarmerLoginPage({ onLogin }) {
+export default function FarmerLoginPage({ onLogin, onReturnToAdmin }) {
   const [lang, setLang] = useState('en');
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [step, setStep] = useState('form'); // 'form' | 'otp'
@@ -124,7 +121,7 @@ export default function FarmerLoginPage({ onLogin }) {
           setError(data.detail || 'Failed to send OTP. Please sign up if you do not have an account.');
         }
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Is the backend running?');
     } finally {
       setLoading(false);
@@ -147,7 +144,7 @@ export default function FarmerLoginPage({ onLogin }) {
       } else {
         setError(data.detail || 'Invalid OTP');
       }
-    } catch (err) {
+    } catch {
       setError('Network error.');
     } finally {
       setLoading(false);
@@ -163,6 +160,16 @@ export default function FarmerLoginPage({ onLogin }) {
       {/* Decorative blobs */}
       <div className="absolute top-0 left-0 w-80 h-80 bg-emerald-700/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
+
+      {/* Return to Command Center */}
+      <div className="absolute top-5 left-5 z-20">
+        <button
+          onClick={onReturnToAdmin || (() => window.location.reload())}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-200 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm transition-all cursor-pointer border border-emerald-500/20"
+        >
+          <ArrowLeft className="w-4 h-4" /> Return to Command Center
+        </button>
+      </div>
 
       {/* Language Switcher */}
       <div className="absolute top-5 right-5 flex gap-1 bg-white/10 rounded-lg p-1 backdrop-blur-sm">

@@ -8,23 +8,15 @@ import {
   Flame,
   FileText,
   Bell,
-  Users,
   Settings,
   Plus,
   Zap,
   Sprout,
-  User,
-  ArrowRightLeft,
   X,
   ChevronDown,
   ChevronRight,
-  Search,
-  CheckCircle2,
-  BarChart3,
   MapPin,
-  Leaf,
-  Shield,
-  TrendingUp
+  CheckCircle
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -68,33 +60,9 @@ export default function Sidebar({
   // Option 2: Minimal / Beginner-Friendly Sidebar (Farmer)
   // -------------------------------------------------------------
   const farmerNavItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: MapPin },
-    {
-      id: 'fields_accordion',
-      label: 'My Fields',
-      icon: Leaf,
-      subItems: [
-        { id: 'overview', label: 'All Fields' },
-        { id: 'report_harvest', label: 'Report Harvest' },
-      ]
-    },
-    {
-      id: 'risk_accordion',
-      label: 'My Risk Status',
-      icon: Shield,
-      subItems: [
-        { id: 'risk_level', label: 'View Risk Level' },
-      ]
-    },
-    {
-      id: 'reports',
-      label: 'Payments & Reports',
-      icon: TrendingUp,
-      subItems: [
-        { id: 'payments', label: 'View Payments' },
-        { id: 'receipts', label: 'Download Receipts' },
-      ]
-    },
+    { id: 'overview', label: 'Dashboard', icon: MapPin },
+    { id: 'fields', label: 'My Fields', icon: Wheat },
+    { id: 'payments', label: 'Payments & Receipts', icon: CheckCircle },
     { id: 'alerts', label: 'Alerts', icon: Bell }
   ];
 
@@ -255,26 +223,73 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* Bottom User Role Toggle */}
+        {/* Bottom Portal & Role Switcher */}
         <div className="p-3 border-t border-[#12382b] space-y-2">
-          {/* Admin / Farmer Toggle */}
-          <div className="bg-[#071c15] border border-[#133d2e] rounded-xl p-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-emerald-800/60 border border-emerald-600/40 flex items-center justify-center text-emerald-300">
-                <User className="w-3.5 h-3.5" />
-              </div>
-              <div className="text-[11px] font-semibold text-white">
-                {isFarmer ? 'Farmer Mode' : 'Admin Mode'}
-              </div>
-            </div>
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] uppercase font-bold text-[#648477] tracking-wider">
+              Portal Mode
+            </span>
+            <span className="text-[10px] font-bold text-emerald-400 capitalize">
+              {userRole === 'admin' ? 'Operations Admin' : userRole === 'farmer' ? 'Farmer Portal' : userRole === 'buyer' ? 'Buyer Portal' : 'Driver Portal'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5 bg-[#071c15] p-1.5 rounded-xl border border-[#133d2e]">
             <button
               onClick={() => {
-                setUserRole(isFarmer ? 'admin' : 'farmer');
+                setUserRole('admin');
                 setOpenAccordion(null);
+                setIsMobileOpen(false);
               }}
-              className="text-[10px] bg-[#0e2c21] hover:bg-[#154132] text-emerald-400 px-2 py-1 rounded-lg font-bold transition-colors cursor-pointer"
+              className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold text-center transition-all cursor-pointer ${
+                userRole === 'admin'
+                  ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                  : 'text-[#9cb5a9] hover:bg-[#0e2c21] hover:text-white'
+              }`}
             >
-              Switch to {isFarmer ? 'Admin' : 'Farmer'}
+              Admin
+            </button>
+            <button
+              onClick={() => {
+                setUserRole('farmer');
+                setOpenAccordion(null);
+                setIsMobileOpen(false);
+              }}
+              className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold text-center transition-all cursor-pointer ${
+                userRole === 'farmer'
+                  ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                  : 'text-[#9cb5a9] hover:bg-[#0e2c21] hover:text-white'
+              }`}
+            >
+              Farmer
+            </button>
+            <button
+              onClick={() => {
+                setUserRole('buyer');
+                setOpenAccordion(null);
+                setIsMobileOpen(false);
+              }}
+              className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold text-center transition-all cursor-pointer ${
+                userRole === 'buyer'
+                  ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                  : 'text-[#9cb5a9] hover:bg-[#0e2c21] hover:text-white'
+              }`}
+            >
+              Buyer Plant
+            </button>
+            <button
+              onClick={() => {
+                setUserRole('driver');
+                setOpenAccordion(null);
+                setIsMobileOpen(false);
+              }}
+              className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold text-center transition-all cursor-pointer ${
+                userRole === 'driver'
+                  ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                  : 'text-[#9cb5a9] hover:bg-[#0e2c21] hover:text-white'
+              }`}
+            >
+              Truck Driver
             </button>
           </div>
         </div>

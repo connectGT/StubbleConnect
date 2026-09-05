@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Truck,
   Building2,
-  ArrowRight,
-  MapPin
+  ArrowRight
 } from 'lucide-react';
 
 export default function PlannedRoutes({ onViewAll, onSelectRoute }) {
@@ -11,18 +10,24 @@ export default function PlannedRoutes({ onViewAll, onSelectRoute }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/v1/routes')
-      .then(res => res.json())
-      .then(data => {
-        if(data.status === 'success') {
-          setRoutes(data.data);
-        }
-        setLoading(false);
-      })
-      .catch(e => {
-        console.error(e);
-        setLoading(false);
-      });
+    const fetchData = () => {
+      fetch('http://localhost:8000/api/v1/routes')
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success') {
+            setRoutes(data.data.slice(0, 3)); // Show top 3
+          }
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setLoading(false);
+        });
+    };
+    
+    fetchData();
+    window.addEventListener('refresh-dashboard-data', fetchData);
+    return () => window.removeEventListener('refresh-dashboard-data', fetchData);
   }, []);
 
   if (loading) return <div className="p-4 text-gray-500">Loading routes...</div>;
@@ -35,7 +40,16 @@ export default function PlannedRoutes({ onViewAll, onSelectRoute }) {
         </h3>
 
         <div className="space-y-3">
-          {routes.map((route, idx) => (
+          {routes.length === 0 ? (
+            <div className="py-8 text-center text-gray-400 text-xs flex flex-col items-center justify-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 border border-teal-100">
+                <Truck className="w-5 h-5" />
+              </div>
+              <div className="font-semibold text-gray-700">No Routes Planned Today</div>
+              <p className="text-[11px] text-gray-400 max-w-[200px]">Dispatch optimal VRP routes connecting farm clusters to biogas plants.</p>
+            </div>
+          ) : (
+            routes.map((route, idx) => (
             <div
               key={route.id}
               onClick={() => onSelectRoute && onSelectRoute(route)}
@@ -80,7 +94,7 @@ export default function PlannedRoutes({ onViewAll, onSelectRoute }) {
                 </div>
               </div>
             </div>
-          ))}
+          )))}
         </div>
       </div>
 

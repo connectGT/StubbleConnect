@@ -6,8 +6,7 @@ import {
   Handshake,
   Truck,
   Flame,
-  ChevronRight,
-  TrendingUp
+  ChevronRight
 } from 'lucide-react';
 
 const iconMap = {

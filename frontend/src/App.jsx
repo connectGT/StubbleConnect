@@ -35,7 +35,7 @@ export default function App() {
         })
         .catch(err => console.error('Failed to sync farmer profile:', err));
     }
-  }, []);
+  }, [farmerUser?.phone]);
 
   // State management
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -63,20 +63,25 @@ export default function App() {
   ]);
 
   React.useEffect(() => {
-    // Fetch live dashboard KPIs from FastAPI
-    fetch('http://localhost:8000/api/v1/analytics/dashboard-kpi')
-      .then(res => res.json())
-      .then(data => {
-        setStats([
-          { id: 'total_fields', title: 'Total Registered Fields', value: data.total_fields.toString(), subtext: 'Farms registered', trend: 'up', icon: 'Leaf', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
-          { id: 'total_biomass', title: 'Est. Biomass Available', value: data.total_biomass_tonnes, unit: 'T', subtext: 'Ready for harvest', trend: 'up', icon: 'Package', iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
-          { id: 'active_clusters', title: 'Active Field Clusters', value: data.active_clusters.toString(), subtext: 'Grouped collection zones', trend: 'up', icon: 'Users', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', trendType: 'info' },
-          { id: 'routes_planned', title: 'Logistics Routes Planned', value: data.routes_planned.toString(), subtext: 'Pending dispatch', trend: 'down', icon: 'Truck', iconBg: 'bg-cyan-50', iconColor: 'text-cyan-600', trendType: 'teal' },
-          { id: 'high_risk', title: 'High Risk Areas', value: data.high_risk_areas.toString(), subtext: 'Immediate action required', trend: 'down', icon: 'Flame', iconBg: 'bg-red-50', iconColor: 'text-red-600', isAlert: true },
-          { id: 'daily_capacity', title: 'Buyer Processing Cap.', value: data.total_buyer_capacity, unit: 'T', subtext: 'Across active plants', trend: 'up', icon: 'Handshake', iconBg: 'bg-purple-50', iconColor: 'text-purple-600' }
-        ]);
-      })
-      .catch(err => console.error("Could not fetch live stats:", err));
+    const fetchStats = () => {
+      fetch('http://localhost:8000/api/v1/analytics/dashboard-kpi')
+        .then(res => res.json())
+        .then(data => {
+          setStats([
+            { id: 'total_fields', title: 'Total Registered Fields', value: data.total_fields.toString(), subtext: 'Farms registered', trend: 'up', icon: 'Leaf', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+            { id: 'total_biomass', title: 'Est. Biomass Available', value: data.total_biomass_tonnes, unit: 'T', subtext: 'Ready for harvest', trend: 'up', icon: 'Package', iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
+            { id: 'active_clusters', title: 'Active Field Clusters', value: data.active_clusters.toString(), subtext: 'Grouped collection zones', trend: 'up', icon: 'Users', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', trendType: 'info' },
+            { id: 'routes_planned', title: 'Logistics Routes Planned', value: data.routes_planned.toString(), subtext: 'Pending dispatch', trend: 'down', icon: 'Truck', iconBg: 'bg-cyan-50', iconColor: 'text-cyan-600', trendType: 'teal' },
+            { id: 'high_risk', title: 'High Risk Areas', value: data.high_risk_areas.toString(), subtext: 'Immediate action required', trend: 'down', icon: 'Flame', iconBg: 'bg-red-50', iconColor: 'text-red-600', isAlert: true },
+            { id: 'daily_capacity', title: 'Buyer Processing Cap.', value: data.total_buyer_capacity, unit: 'T', subtext: 'Across active plants', trend: 'up', icon: 'Handshake', iconBg: 'bg-purple-50', iconColor: 'text-purple-600' }
+          ]);
+        })
+        .catch(err => console.error("Could not fetch live stats:", err));
+    };
+
+    fetchStats();
+    window.addEventListener('refresh-dashboard-data', fetchStats);
+    return () => window.removeEventListener('refresh-dashboard-data', fetchStats);
   }, []);
 
   // Modal States
@@ -120,6 +125,12 @@ export default function App() {
   // Switch role handler
   const handleRoleChange = (newRole) => {
     setUserRole(newRole);
+    if (newRole === 'farmer') {
+      setActiveTab('overview');
+    } else if (newRole === 'admin') {
+      setActiveTab('dashboard');
+      window.dispatchEvent(new Event('refresh-dashboard-data'));
+    }
     const roleLabels = {
       admin: 'Operations Admin',
       buyer: 'Biogas Plant Buyer',
@@ -152,6 +163,7 @@ export default function App() {
     return (
       <FarmerLoginPage
         onLogin={(user) => { handleLogin(user); }}
+        onReturnToAdmin={() => setUserRole('admin')}
       />
     );
   }
@@ -164,22 +176,39 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={(tab) => {
           setActiveTab(tab);
-          if (tab === 'reports') {
-            showToast("Generating AI Carbon Impact Report...");
-            setTimeout(() => showToast("Report downloaded successfully!"), 2000);
-            return;
-          }
-          const modalMap = {
-            'risk_map': 'risk',
-            'alerts': 'notifications',
-            'routes': 'routes',
-            'buyers': 'buyers',
-            'fields': 'fields',
-            'clusters': 'clusters',
-            'settings': 'settings'
-          };
-          if (modalMap[tab]) {
-            setListViewModalType(modalMap[tab]);
+          if (userRole === 'admin') {
+            if (tab === 'reports') {
+              showToast("Generating AI Carbon Impact Report...");
+              setTimeout(() => {
+                const csv = "data:text/csv;charset=utf-8," + encodeURIComponent(
+                  "Cluster,Biomass_T,CO2_Avoided_T,Methane_Potential_m3,Farmer_Payout_INR,Status\n" +
+                  "Bathinda North,145.2,217.8,36300,363000,Aggregated\n" +
+                  "Talwandi Sabo,98.5,147.75,24625,246250,In Transit\n" +
+                  "Mansa Central,180.0,270.0,45000,450000,Delivered\n" +
+                  "Rampura Phul,75.4,113.1,18850,188500,Aggregated\n"
+                );
+                const link = document.createElement("a");
+                link.setAttribute("href", csv);
+                link.setAttribute("download", "StubbleConnect_Carbon_Impact_Report_2026.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("Report downloaded successfully!");
+              }, 800);
+              return;
+            }
+            const modalMap = {
+              'risk_map': 'risk',
+              'alerts': 'notifications',
+              'routes': 'routes',
+              'buyers': 'buyers',
+              'fields': 'fields',
+              'clusters': 'clusters',
+              'settings': 'settings'
+            };
+            if (modalMap[tab]) {
+              setListViewModalType(modalMap[tab]);
+            }
           }
         }}
         onQuickAction={handleQuickAction}
@@ -195,6 +224,12 @@ export default function App() {
         <Header
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
+          onSearchSubmit={(term) => {
+            if (term && term.trim()) {
+              setListViewModalType('fields');
+              showToast(`Searching directory for: "${term.trim()}"`);
+            }
+          }}
           onOpenMobileMenu={() => setIsMobileOpen(true)}
           userRole={userRole}
           farmerUser={farmerUser}
@@ -215,9 +250,16 @@ export default function App() {
                 stats={stats}
                 onSelectRiskMap={() => setListViewModalType('risk')}
                 onCardClick={(statId) => {
-                  if (statId === 'routes_planned') setListViewModalType('routes');
-                  if (statId === 'active_clusters' || statId === 'matched_clusters') {
-                    setIsClusterModalOpen(true);
+                  if (statId === 'total_fields' || statId === 'total_biomass') {
+                    setListViewModalType('fields');
+                  } else if (statId === 'active_clusters' || statId === 'matched_clusters') {
+                    setListViewModalType('clusters');
+                  } else if (statId === 'routes_planned') {
+                    setListViewModalType('routes');
+                  } else if (statId === 'high_risk') {
+                    setListViewModalType('risk');
+                  } else if (statId === 'daily_capacity') {
+                    setListViewModalType('buyers');
                   }
                 }}
               />
@@ -235,9 +277,11 @@ export default function App() {
                 }}
                 onOpenBuyerDetails={(buyer) => {
                   setListViewModalType('buyers');
+                  if (buyer?.name) showToast(`Inspecting plant: ${buyer.name}`);
                 }}
-                onOpenLogistics={() => {
+                onOpenLogistics={(rt) => {
                   setListViewModalType('routes');
+                  if (rt?.code) showToast(`Inspecting route: ${rt.code}`);
                 }}
               />
 
@@ -259,6 +303,26 @@ export default function App() {
               onRegisterClick={() => setActiveQuickAction('register_field')}
               farmerUser={farmerUser}
               onLogout={handleLogout}
+              activeTab={activeTab}
+              onTabChange={(tab) => {
+                setActiveTab(tab);
+                if (tab === 'receipts') {
+                  const csv = "data:text/csv;charset=utf-8," + encodeURIComponent(
+                    "Receipt_ID,Date,Field,Biomass_T,Rate_INR,Total_INR,Mode,Status\n" +
+                    "RCP-2026-001,15 Aug 2026,Farm A,22.5,2500,56250,UPI,Paid\n" +
+                    "RCP-2026-002,12 Jul 2026,Farm A,10.2,2400,24480,Bank Transfer,Paid\n" +
+                    "RCP-2026-003,03 Jun 2026,Farm C,8.0,2350,18800,UPI,Paid\n" +
+                    "RCP-2026-004,18 Apr 2026,Farm B,14.3,2300,32890,UPI,Paid\n"
+                  );
+                  const link = document.createElement("a");
+                  link.setAttribute("href", csv);
+                  link.setAttribute("download", `StubbleConnect_Receipts_${farmerUser?.name?.replace(/\s+/g, '_') || 'Farmer'}.csv`);
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  showToast("Payment receipts exported to CSV");
+                }
+              }}
             />
           )}
         </main>
@@ -292,6 +356,7 @@ export default function App() {
           onClose={() => setActiveQuickAction(null)}
           onSuccess={() => {
             showToast('Action completed successfully!');
+            window.dispatchEvent(new Event('refresh-dashboard-data'));
           }}
         />
       )}

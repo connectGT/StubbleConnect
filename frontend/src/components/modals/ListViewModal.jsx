@@ -6,11 +6,10 @@ import {
   History,
   Bell,
   Flame,
-  CheckCircle,
-  Clock,
-  ExternalLink,
   Wheat,
   Share2,
+  Cpu,
+  Check,
 } from 'lucide-react';
 
 export default function ListViewModal({ type, onClose, onSelectCluster }) {
@@ -20,40 +19,55 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
   const [clusters, setClusters] = useState([]);
   const [activities, setActivities] = useState([]);
   const [alerts, setAlerts] = useState([]);
+  const [minBiomassThreshold, setMinBiomassThreshold] = useState(50);
+  const [maxRoutingDistance, setMaxRoutingDistance] = useState(35);
+  const [autoDispatch, setAutoDispatch] = useState(true);
+  const [satelliteSync, setSatelliteSync] = useState(true);
+  const [settingsSaved, setSettingsSaved] = useState(false);
 
   useEffect(() => {
-    if (type === 'activity') {
-      fetch('http://localhost:8000/api/v1/analytics/activity-feed')
-        .then(res => res.json())
-        .then(data => setActivities(data))
-        .catch(err => console.error(err));
-    }
-    if (type === 'notifications') {
-      fetch('http://localhost:8000/api/v1/analytics/alerts')
-        .then(res => res.json())
-        .then(data => setAlerts(data))
-        .catch(err => console.error(err));
-    }
-    if (type === 'routes') {
-      fetch('http://localhost:8000/api/v1/routes')
-        .then(res => res.json())
-        .then(data => { if(data.status === 'success') setRoutes(data.data); });
-    }
-    if (type === 'buyers') {
-      fetch('http://localhost:8000/api/v1/buyers')
-        .then(res => res.json())
-        .then(data => { if(data.status === 'success') setBuyers(data.data); });
-    }
-    if (type === 'fields') {
-      fetch('http://localhost:8000/api/v1/fields')
-        .then(res => res.json())
-        .then(data => { if(data.status === 'success') setFields(data.data); });
-    }
-    if (type === 'clusters' || type === 'risk') {
-      fetch('http://localhost:8000/api/v1/clusters')
-        .then(res => res.json())
-        .then(data => { if(data.status === 'success') setClusters(data.data); });
-    }
+    const fetchData = () => {
+      if (type === 'activity') {
+        fetch('http://localhost:8000/api/v1/analytics/activity-feed')
+          .then(res => res.json())
+          .then(data => setActivities(data))
+          .catch(err => console.error(err));
+      }
+      if (type === 'notifications') {
+        fetch('http://localhost:8000/api/v1/analytics/alerts')
+          .then(res => res.json())
+          .then(data => setAlerts(data))
+          .catch(err => console.error(err));
+      }
+      if (type === 'routes') {
+        fetch('http://localhost:8000/api/v1/routes')
+          .then(res => res.json())
+          .then(data => setRoutes(data.data || []))
+          .catch(err => console.error(err));
+      }
+      if (type === 'buyers') {
+        fetch('http://localhost:8000/api/v1/buyers')
+          .then(res => res.json())
+          .then(data => setBuyers(data.data || []))
+          .catch(err => console.error(err));
+      }
+      if (type === 'fields') {
+        fetch('http://localhost:8000/api/v1/fields')
+          .then(res => res.json())
+          .then(data => setFields(data.data || []))
+          .catch(err => console.error(err));
+      }
+      if (type === 'clusters' || type === 'risk') {
+        fetch('http://localhost:8000/api/v1/clusters')
+          .then(res => res.json())
+          .then(data => setClusters(data.data || []))
+          .catch(err => console.error(err));
+      }
+    };
+    
+    fetchData();
+    window.addEventListener('refresh-dashboard-data', fetchData);
+    return () => window.removeEventListener('refresh-dashboard-data', fetchData);
   }, [type]);
 
   if (!type) return null;
@@ -115,100 +129,128 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
 
           {type === 'routes' && (
             <div className="space-y-3">
-              {routes.map((route) => (
-                <div key={route.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-gray-900">{route.code}</span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800">
-                        {route.status}
-                      </span>
+              {routes.length === 0 ? (
+                <div className="text-center p-8 text-gray-500 italic">No planned biomass collection routes found.</div>
+              ) : (
+                routes.map((route) => (
+                  <div key={route.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80 flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-gray-900">{route.code}</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800">
+                          {route.status}
+                        </span>
+                      </div>
+                      <div className="text-gray-600 mt-1">
+                        Origin: <span className="font-semibold text-gray-800">{route.cluster}</span> &rarr; Destination:{' '}
+                        <span className="font-semibold text-gray-800">{route.buyer} ({route.buyerLocation})</span>
+                      </div>
                     </div>
-                    <div className="text-gray-600 mt-1">
-                      Origin: <span className="font-semibold text-gray-800">{route.cluster}</span> &rarr; Destination:{' '}
-                      <span className="font-semibold text-gray-800">{route.buyer} ({route.buyerLocation})</span>
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-gray-900">{route.stops} Pickup Stops</div>
+                      <div className="text-emerald-700 font-semibold">{route.tonnage} Tonnes</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-bold text-gray-900">{route.stops} Pickup Stops</div>
-                    <div className="text-emerald-700 font-semibold">{route.tonnage} Tonnes</div>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
           {type === 'buyers' && (
             <div className="space-y-3">
-              {buyers.map((b) => (
-                <div key={b.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h4 className="font-bold text-sm text-gray-900">{b.name}</h4>
-                      <p className="text-gray-500">{b.location}, Punjab &bull; {b.type}</p>
+              {buyers.length === 0 ? (
+                <div className="text-center p-8 text-gray-500 italic">No registered biomass off-takers or plants found.</div>
+              ) : (
+                buyers.map((b) => (
+                  <div key={b.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <h4 className="font-bold text-sm text-gray-900">{b.name}</h4>
+                        <p className="text-gray-500">{b.location}, Punjab &bull; {b.type}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-bold text-sm text-gray-900">
+                          {b.currentCapacity} / {b.maxCapacity} Tonnes
+                        </span>
+                        <p className="text-emerald-700 font-bold">{b.percentage}% Filled</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="font-bold text-sm text-gray-900">
-                        {b.currentCapacity} / {b.maxCapacity} Tonnes
-                      </span>
-                      <p className="text-emerald-700 font-bold">{b.percentage}% Filled</p>
+                    <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="bg-emerald-600 h-full rounded-full"
+                        style={{ width: `${b.percentage}%` }}
+                      />
                     </div>
                   </div>
-                  <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-                    <div
-                      className="bg-emerald-600 h-full rounded-full"
-                      style={{ width: `${b.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
           {type === 'fields' && (
             <div className="space-y-3">
-              {fields.map((f) => (
-                <div key={f.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80 flex justify-between items-center">
-                  <div>
-                    <h4 className="font-bold text-sm text-gray-900">{f.farmer_name}</h4>
-                    <p className="text-gray-500">Location: {f.village} &bull; Size: {f.area_acres} Acres</p>
-                    <p className="text-emerald-700 font-semibold mt-1">Est. Biomass: {f.biomass} Tonnes</p>
+              {fields.length === 0 ? (
+                <div className="text-center p-8 text-gray-500 italic">No farm fields registered yet.</div>
+              ) : (
+                fields.map((f) => (
+                  <div key={f.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80 flex justify-between items-center">
+                    <div>
+                      <h4 className="font-bold text-sm text-gray-900">{f.farmer_name || f.farmer || 'Farmer'}</h4>
+                      <p className="text-gray-500">Location: {f.village || f.location} &bull; Size: {f.area_acres || f.acres || 0} Acres</p>
+                      <p className="text-emerald-700 font-semibold mt-1">Est. Biomass: {f.biomass || f.biomass_est || 0} Tonnes</p>
+                    </div>
+                    <div>
+                      {f.is_clustered ? (
+                         <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">Clustered</span>
+                      ) : (
+                         <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">Pending</span>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    {f.is_clustered ? (
-                       <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">Clustered</span>
-                    ) : (
-                       <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">Pending</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
           {type === 'clusters' && (
             <div className="space-y-3">
-              {clusters.map((c) => (
-                <div key={c.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-bold text-sm text-gray-900">Cluster {c.name}</h4>
-                      <p className="text-gray-500 mt-0.5">{c.farms_count} Farms Combined</p>
+              {clusters.length === 0 ? (
+                <div className="text-center p-8 text-gray-500 italic">No active collection clusters found. Run spatial clustering to group nearby fields.</div>
+              ) : (
+                clusters.map((c) => (
+                  <div key={c.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200/80">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-bold text-sm text-gray-900">Cluster {c.name}</h4>
+                        <p className="text-gray-500 mt-0.5">{c.farmsCount ?? c.farms_count ?? (c.farms ? c.farms.length : 0)} Farms Combined</p>
+                      </div>
+                      <div className="text-right">
+                         <span className="font-bold text-sm text-emerald-700">{c.totalBiomass ?? c.total_biomass ?? 0} Tonnes</span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                       <span className="font-bold text-sm text-emerald-700">{c.total_biomass} Tonnes</span>
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={() => {
+                          if (onSelectCluster) onSelectCluster(c);
+                          onClose();
+                        }}
+                        className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-semibold flex gap-1 items-center cursor-pointer transition-colors"
+                      >
+                         <Route className="w-3.5 h-3.5" /> Plan Route
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (onSelectCluster) onSelectCluster(c);
+                          onClose();
+                        }}
+                        className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold flex gap-1 items-center cursor-pointer transition-colors"
+                      >
+                         Inspect Map
+                      </button>
                     </div>
                   </div>
-                  <div className="mt-3 flex gap-2">
-                    <button className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg font-semibold hover:bg-blue-100 flex gap-1 items-center">
-                       <Route className="w-3.5 h-3.5" /> Plan Route
-                    </button>
-                    <button className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 flex gap-1 items-center">
-                       Inspect Map
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
@@ -221,18 +263,32 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
                     <div>
                        <div className="flex justify-between mb-1">
                           <label className="font-semibold text-gray-700">Min. Biomass Threshold for Clustering</label>
-                          <span className="font-bold text-purple-700">50 Tonnes</span>
+                          <span className="font-bold text-purple-700">{minBiomassThreshold} Tonnes</span>
                        </div>
-                       <input type="range" min="10" max="100" defaultValue="50" className="w-full accent-purple-600" />
+                       <input
+                         type="range"
+                         min="10"
+                         max="100"
+                         value={minBiomassThreshold}
+                         onChange={(e) => setMinBiomassThreshold(Number(e.target.value))}
+                         className="w-full accent-purple-600"
+                       />
                        <p className="text-[10px] text-gray-500 mt-1">Algorithm will not form a cluster until this threshold is met.</p>
                     </div>
 
                     <div>
                        <div className="flex justify-between mb-1">
                           <label className="font-semibold text-gray-700">Max Truck Routing Distance</label>
-                          <span className="font-bold text-purple-700">35 km</span>
+                          <span className="font-bold text-purple-700">{maxRoutingDistance} km</span>
                        </div>
-                       <input type="range" min="10" max="100" defaultValue="35" className="w-full accent-purple-600" />
+                       <input
+                         type="range"
+                         min="10"
+                         max="100"
+                         value={maxRoutingDistance}
+                         onChange={(e) => setMaxRoutingDistance(Number(e.target.value))}
+                         className="w-full accent-purple-600"
+                       />
                        <p className="text-[10px] text-gray-500 mt-1">Maximum radius for fleet dispatch from a central buyer facility.</p>
                     </div>
                  </div>
@@ -247,7 +303,12 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
                        <div className="text-[10px] text-gray-500 mt-0.5">Automatically ping trucks when a route is generated</div>
                     </div>
                     <div className="relative">
-                       <input type="checkbox" defaultChecked className="sr-only peer" />
+                       <input
+                         type="checkbox"
+                         checked={autoDispatch}
+                         onChange={(e) => setAutoDispatch(e.target.checked)}
+                         className="sr-only peer"
+                       />
                        <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                     </div>
                  </label>
@@ -258,10 +319,29 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
                        <div className="text-[10px] text-gray-500 mt-0.5">Ingest VIIRS/MODIS thermal anomalies for risk mapping</div>
                     </div>
                     <div className="relative">
-                       <input type="checkbox" defaultChecked className="sr-only peer" />
+                       <input
+                         type="checkbox"
+                         checked={satelliteSync}
+                         onChange={(e) => setSatelliteSync(e.target.checked)}
+                         className="sr-only peer"
+                       />
                        <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
                     </div>
                  </label>
+
+                 <div className="pt-2 flex justify-end">
+                    <button
+                      onClick={() => {
+                        localStorage.setItem('stubble_vrp_params', JSON.stringify({ minBiomassThreshold, maxRoutingDistance, autoDispatch, satelliteSync }));
+                        setSettingsSaved(true);
+                        setTimeout(() => setSettingsSaved(false), 3000);
+                      }}
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      {settingsSaved ? <Check className="w-4 h-4" /> : <Cpu className="w-4 h-4" />}
+                      {settingsSaved ? 'Configuration Saved!' : 'Save AI Parameters'}
+                    </button>
+                 </div>
               </div>
             </div>
           )}
@@ -269,35 +349,39 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
           {type === 'risk' && (
             <div className="space-y-3">
               <p className="text-gray-600">
-                {clusters.filter(c => c.riskScore >= 65).length} High-Risk Agricultural Clusters identified with less than 48 hours remaining in their harvest burn window:
+                {clusters.filter(c => (c.riskScore ?? 0) >= 65).length} High-Risk Agricultural Clusters identified with less than 48 hours remaining in their harvest burn window:
               </p>
-              {clusters
-                .filter((c) => c.riskScore >= 65)
-                .map((cl) => (
-                  <div
-                    key={cl.id}
-                    onClick={() => {
-                      if (onSelectCluster) onSelectCluster(cl);
-                      onClose();
-                    }}
-                    className="p-3.5 bg-red-50/60 border border-red-200 rounded-xl flex items-center justify-between hover:bg-red-50 cursor-pointer transition-colors"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Flame className="w-4 h-4 text-red-600" />
-                        <span className="font-bold text-gray-900">{cl.name}</span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800">
-                          Score: {cl.riskScore}/100
-                        </span>
+              {clusters.filter(c => (c.riskScore ?? 0) >= 65).length === 0 ? (
+                <div className="text-center p-6 text-gray-500 italic">No high-risk agricultural clusters identified.</div>
+              ) : (
+                clusters
+                  .filter((c) => (c.riskScore ?? 0) >= 65)
+                  .map((cl) => (
+                    <div
+                      key={cl.id}
+                      onClick={() => {
+                        if (onSelectCluster) onSelectCluster(cl);
+                        onClose();
+                      }}
+                      className="p-3.5 bg-red-50/60 border border-red-200 rounded-xl flex items-center justify-between hover:bg-red-50 cursor-pointer transition-colors"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Flame className="w-4 h-4 text-red-600" />
+                          <span className="font-bold text-gray-900">{cl.name}</span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800">
+                            Score: {cl.riskScore ?? 0}/100
+                          </span>
+                        </div>
+                        <p className="text-gray-600 mt-1">{cl.farmsCount ?? cl.farms_count ?? 0} Farms &bull; {cl.totalBiomass ?? cl.total_biomass ?? 0} Tonnes Biomass</p>
+                        <p className="text-red-700 font-medium mt-0.5">{cl.recommendedAction || 'Priority collection suggested due to high burning risk.'}</p>
                       </div>
-                      <p className="text-gray-600 mt-1">{cl.farmsCount} Farms &bull; {cl.totalBiomass} Tonnes Biomass</p>
-                      <p className="text-red-700 font-medium mt-0.5">{cl.recommendedAction}</p>
+                      <button className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold cursor-pointer">
+                        Inspect
+                      </button>
                     </div>
-                    <button className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold">
-                      Inspect
-                    </button>
-                  </div>
-                ))}
+                  ))
+              )}
             </div>
           )}
 

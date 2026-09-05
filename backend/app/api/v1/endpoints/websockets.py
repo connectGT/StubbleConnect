@@ -15,11 +15,19 @@ class ConnectionManager:
         self.active_connections.append(websocket)
 
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
 
     async def broadcast(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
+        disconnected = []
+        for connection in list(self.active_connections):
+            try:
+                await connection.send_text(message)
+            except Exception:
+                disconnected.append(connection)
+        for dead in disconnected:
+            if dead in self.active_connections:
+                self.active_connections.remove(dead)
 
 manager = ConnectionManager()
 
@@ -125,48 +133,54 @@ TRUCKS = [
 
 async def simulate_truck_movement():
     while True:
-        if manager.active_connections:
-            for t in TRUCKS:
-                path = t["path"]
-                idx = t["current_segment"]
-                
-                if idx >= len(path) - 1:
-                    t["current_segment"] = 0
-                    idx = 0
+        try:
+            if manager.active_connections:
+                for t in TRUCKS:
+                    path = t["path"]
+                    idx = t["current_segment"]
                     
-                p1 = path[idx]
-                p2 = path[idx + 1]
-                
-                current_pos = interpolate_points(p1, p2, t["progress"])
-                heading = math.degrees(math.atan2(p2[1] - p1[1], p2[0] - p1[0]))
-                
-                # Calculate ETA based on remaining segments
-                total_segs = len(path)
-                rem_segs = total_segs - idx
-                pct_left = rem_segs / total_segs if total_segs > 0 else 0
-                sec_left = int(t["total_duration_sec"] * pct_left)
-                eta_mins = max(1, sec_left // 60)
-                
-                await manager.broadcast(json.dumps({
-                    "type": "TRUCK_UPDATE",
-                    "data": {
-                        "truck_id": t["id"],
-                        "position": current_pos,
-                        "heading": heading,
-                        "status": t["status"],
-                        "color": t["color"],
-                        "tonnage": t["tonnage"],
-                        "destination": t["destination"],
-                        "eta_mins": eta_mins,
-                        "delay_status": t["delay_status"],
-                        "delay_color": "red-600" if t["delay_mins"] > 0 else "emerald-600"
-                    }
-                }))
-                
-                t["progress"] += t["speed"]
-                if t["progress"] >= 1.0:
-                    t["progress"] = 0.0
-                    t["current_segment"] += 1
+                    if idx >= len(path) - 1:
+                        t["current_segment"] = 0
+                        idx = 0
+                        
+                    p1 = path[idx]
+                    p2 = path[idx + 1]
+                    
+                    current_pos = interpolate_points(p1, p2, t["progress"])
+                    heading = math.degrees(math.atan2(p2[1] - p1[1], p2[0] - p1[0]))
+                    
+                    # Calculate ETA based on remaining segments
+                    total_segs = len(path)
+                    rem_segs = total_segs - idx
+                    pct_left = rem_segs / total_segs if total_segs > 0 else 0
+                    sec_left = int(t["total_duration_sec"] * pct_left)
+                    eta_mins = max(1, sec_left // 60)
+                    
+                    try:
+                        await manager.broadcast(json.dumps({
+                            "type": "TRUCK_UPDATE",
+                            "data": {
+                                "truck_id": t["id"],
+                                "position": current_pos,
+                                "heading": heading,
+                                "status": t["status"],
+                                "color": t["color"],
+                                "tonnage": t["tonnage"],
+                                "destination": t["destination"],
+                                "eta_mins": eta_mins,
+                                "delay_status": t["delay_status"],
+                                "delay_color": "red-600" if t["delay_mins"] > 0 else "emerald-600"
+                            }
+                        }))
+                    except Exception:
+                        pass
+                    
+                    t["progress"] += t["speed"]
+                    if t["progress"] >= 1.0:
+                        t["progress"] = 0.0
+                        t["current_segment"] += 1
+        except Exception:
+            pass
                         
         await asyncio.sleep(0.5)
 
@@ -176,5 +190,5 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, Exception):
         manager.disconnect(websocket)

@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import {
   X,
-  Plus,
   Zap,
   Route,
   CheckCircle,
   Building2,
   Wheat,
-  MapPin,
   Sparkles,
   Truck
 } from 'lucide-react';
@@ -29,6 +27,7 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
     farmerName: '',
     phone: '',
     village: 'Bathinda City',
+    customVillage: '',
     acres: '12',
     cropType: 'Paddy / Basmati',
     harvestDate: '2026-09-06',
@@ -52,14 +51,17 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
 
     try {
       if (actionType === 'register_field') {
-        const coords = PUNJAB_LOCATIONS[formData.village];
-        const finalLat = coords.lat + (Math.random() * 0.01 - 0.005);
-        const finalLng = coords.lng + (Math.random() * 0.01 - 0.005);
+        const resolvedVillage = formData.village === 'new'
+          ? (formData.customVillage.trim() || 'Bathinda Area')
+          : formData.village;
+        const coords = PUNJAB_LOCATIONS[resolvedVillage] || PUNJAB_LOCATIONS["Bathinda City"];
+        const finalLat = (coords?.lat || 30.211) + (Math.random() * 0.01 - 0.005);
+        const finalLng = (coords?.lng || 74.945) + (Math.random() * 0.01 - 0.005);
 
         const payload = {
           farmer_name: formData.farmerName || 'Farmer',
           phone: formData.phone || '+910000000000',
-          village: formData.village,
+          village: resolvedVillage,
           district: 'Bathinda',
           state: 'Punjab',
           acres: parseFloat(formData.acres) || 1.0,
@@ -76,7 +78,7 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
         });
 
         if (!res.ok) throw new Error('API request failed');
-        setSuccessMsg(`Field registered at ${formData.village}! Assigned to spatial grid.`);
+        setSuccessMsg(`Field registered at ${resolvedVillage}! Assigned to spatial grid.`);
       } else if (actionType === 'add_buyer') {
         const coords = PUNJAB_LOCATIONS[formData.buyerLocation] || PUNJAB_LOCATIONS["Bathinda City"];
 
@@ -215,6 +217,25 @@ export default function QuickActionModal({ actionType, onClose, onSuccess }) {
                 </select>
                 <p className="text-gray-500 mt-1 text-[10px]">Select a previously saved field to declare its harvest, or add a new one. Area will auto-fill.</p>
               </div>
+
+              {formData.village === 'new' && (
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">
+                    Custom Village / Field Location Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g., Sangat Mandi, Bathinda"
+                    value={formData.customVillage}
+                    onChange={(e) =>
+                      setFormData({ ...formData, customVillage: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 text-sm"
+                  />
+                  <p className="text-gray-500 mt-1 text-[10px]">Enter custom location name. Will map to nearest regional depot.</p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>

@@ -143,11 +143,11 @@ function PickupOTPModal({ onClose }) {
   );
 }
 
-function RegisterHarvestModal({ onClose, onSuccess }) {
+function RegisterHarvestModal({ onClose, onSuccess, t }) {
   const [formData, setFormData] = useState({ field: '', crop: 'Paddy / Basmati', acres: '', harvestDate: '2026-09-06' });
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
-  const fieldAcres = { 'Farm A – Talwandi Sabo': '10', 'Farm B – Rampura Phul': '14', 'Farm C – Goniana': '7' };
+  const fieldAcres = { 'Farm A — Talwandi Sabo': '10', 'Farm B — Rampura Phul': '14', 'Farm C — Goniana': '7' };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -162,7 +162,7 @@ function RegisterHarvestModal({ onClose, onSuccess }) {
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
         <div className="bg-[#0a251c] px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2"><Wheat className="w-5 h-5 text-emerald-400" />
-            <h3 className="font-bold text-white text-sm">Report New Harvest</h3>
+            <h3 className="font-bold text-white text-sm">{t('report_harvest')}</h3>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white cursor-pointer"><X className="w-5 h-5" /></button>
         </div>
@@ -238,6 +238,69 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
   });
   const [etaMinutes, setEtaMinutes] = useState(47);
   const [toast, setToast] = useState('');
+  const [lang, setLang] = useState('en');
+
+  const dict = {
+    en: {
+      overview: 'Overview',
+      fields: 'My Fields',
+      payments: 'Payments',
+      alerts: 'Alerts',
+      welcome: 'Welcome back',
+      welcome_title: 'Welcome to StubbleConnect!',
+      welcome_desc: 'To start earning, you need to register your first field location and estimated harvest date.',
+      register_first: 'Register Your First Field',
+      total_biomass_sold: 'Total Biomass Sold',
+      total_earnings: 'Total Earnings',
+      carbon_credits: 'Carbon Credits Earned',
+      biomass_price: 'Current Biomass Price (MSP)',
+      active_pickup: 'Active Harvest Pickup',
+      recent_transactions: 'Payment History',
+      registered_fields: 'registered fields',
+      report_harvest: 'Report New Harvest',
+      no_fields: 'No Fields Registered'
+    },
+    pb: {
+      overview: 'ਸੰਖੇਪ',
+      fields: 'ਮੇਰੇ ਖੇਤ',
+      payments: 'ਭੁਗਤਾਨ',
+      alerts: 'ਸੂਚਨਾਵਾਂ',
+      welcome: 'ਵਾਪਸ ਸੁਆਗਤ ਹੈ',
+      welcome_title: 'StubbleConnect ਵਿੱਚ ਸੁਆਗਤ ਹੈ!',
+      welcome_desc: 'ਕਮਾਈ ਸ਼ੁਰੂ ਕਰਨ ਲਈ, ਆਪਣੇ ਪਹਿਲੇ ਖੇਤ ਦੀ ਸਥਿਤੀ ਅਤੇ ਅਨੁਮਾਨਿਤ ਵਾਢੀ ਦੀ ਤਾਰੀਖ ਦਰਜ ਕਰੋ।',
+      register_first: 'ਆਪਣਾ ਪਹਿਲਾ ਖੇਤ ਰਜਿਸਟਰ ਕਰੋ',
+      total_biomass_sold: 'ਕੁੱਲ ਬਾਇਓਮਾਸ ਵੇਚਿਆ',
+      total_earnings: 'ਕੁੱਲ ਕਮਾਈ',
+      carbon_credits: 'ਕਾਰਬਨ ਕ੍ਰੈਡਿਟ ਕਮਾਏ',
+      biomass_price: 'ਮੌਜੂਦਾ ਬਾਇਓਮਾਸ ਕੀਮਤ (MSP)',
+      active_pickup: 'ਸਰਗਰਮ ਵਾਢੀ ਪਿਕਅੱਪ',
+      recent_transactions: 'ਭੁਗਤਾਨ ਇਤਿਹਾਸ',
+      registered_fields: 'ਰਜਿਸਟਰਡ ਖੇਤ',
+      report_harvest: 'ਨਵੀਂ ਵਾਢੀ ਰਿਪੋਰਟ ਕਰੋ',
+      no_fields: 'ਕੋਈ ਖੇਤ ਰਜਿਸਟਰਡ ਨਹੀਂ'
+    },
+    hi: {
+      overview: 'सारांश',
+      fields: 'मेरे खेत',
+      payments: 'भुगतान',
+      alerts: 'सूचनाएं',
+      welcome: 'वापस स्वागत है',
+      welcome_title: 'StubbleConnect में स्वागत है!',
+      welcome_desc: 'कमाई शुरू करने के लिए, अपने पहले खेत की जगह और अनुमानित कटाई की तारीख दर्ज करें।',
+      register_first: 'अपना पहला खेत पंजीकृत करें',
+      total_biomass_sold: 'कुल बायोमास बेचा',
+      total_earnings: 'कुल कमाई',
+      carbon_credits: 'अर्जित कार्बन क्रेडिट',
+      biomass_price: 'वर्तमान बायोमास मूल्य (MSP)',
+      active_pickup: 'सक्रिय फसल पिकअप',
+      recent_transactions: 'भुगतान इतिहास',
+      registered_fields: 'पंजीकृत खेत',
+      report_harvest: 'नई फसल रिपोर्ट करें',
+      no_fields: 'कोई खेत पंजीकृत नहीं'
+    }
+  };
+  const t = (k) => dict[lang] ? (dict[lang][k] || dict.en[k] || k) : (dict.en[k] || k);
+
 
   // Simulate live truck ETA countdown (bug #4)
   useEffect(() => {
@@ -262,10 +325,10 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
   const hasFields = myFields.length > 0;
 
   const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'fields', label: 'My Fields' },
-    { id: 'payments', label: 'Payments' },
-    { id: 'alerts', label: 'Alerts', badge: 2 },
+    { id: 'overview', label: t('overview') },
+    { id: 'fields', label: t('fields') },
+    { id: 'payments', label: t('payments') },
+    { id: 'alerts', label: t('alerts'), badge: 2 },
   ];
 
   const statusColors = {
@@ -310,7 +373,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
       {/* ── Welcome Banner (bug #3, #6, #16 fixed) ── */}
       <div className="tour-welcome bg-gradient-to-r from-emerald-800 to-emerald-700 text-white p-5 rounded-2xl shadow-md flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold">Welcome back, {name} 👋</h2>
+          <h2 className="text-xl font-bold">{t('welcome')}, {name} 👋</h2>
           <p className="text-emerald-100 text-sm mt-1">{village} • FPO ID: {fpoId}</p>
         </div>
         <div className="flex gap-2">
@@ -347,8 +410,8 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
                 <span className="text-2xl mt-0.5">🌱</span>
                 <div>
-                  <h3 className="font-bold text-emerald-900">Welcome to StubbleConnect!</h3>
-                  <p className="text-xs text-emerald-700 mt-1">To start earning, you need to register your first field location and estimated harvest date.</p>
+                  <h3 className="font-bold text-emerald-900">{t('welcome_title')}</h3>
+                  <p className="text-xs text-emerald-700 mt-1">{t('welcome_desc')}</p>
                   <button onClick={() => setShowRegisterHarvest(true)}
                     className="tour-register-btn mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors">
                     Register Your First Field
@@ -361,7 +424,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <div className="p-2 bg-emerald-100 rounded-lg w-fit mb-2"><Sprout className="w-4 h-4 text-emerald-600" /></div>
-                <p className="text-xs text-gray-500">Total Biomass Sold</p>
+                <p className="text-xs text-gray-500">{t('total_biomass_sold')}</p>
                 <p className="text-2xl font-black text-gray-900 mt-0.5">{farmerUser?.total_biomass_sold || 0} <span className="text-sm font-normal text-gray-500">T</span></p>
               </div>
               <button onClick={() => setActiveTab('payments')}
@@ -370,13 +433,13 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
                   <div className="p-2 bg-blue-100 rounded-lg"><IndianRupee className="w-4 h-4 text-blue-600" /></div>
                   <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-emerald-500 transition-colors" />
                 </div>
-                <p className="text-xs text-gray-500">Total Earnings</p>
+                <p className="text-xs text-gray-500">{t('total_earnings')}</p>
                 <p className="text-2xl font-black text-gray-900 mt-0.5">₹{(farmerUser?.total_earnings || 0).toLocaleString()}</p>
                 <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">View Payment History →</p>
               </button>
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <div className="p-2 bg-amber-100 rounded-lg w-fit mb-2"><Leaf className="w-4 h-4 text-amber-600" /></div>
-                <p className="text-xs text-gray-500">Carbon Credits Earned</p>
+                <p className="text-xs text-gray-500">{t('carbon_credits')}</p>
                 <p className="text-2xl font-black text-gray-900 mt-0.5">{(farmerUser?.total_biomass_sold || 0) * 0.75} <span className="text-sm font-normal text-gray-500">Credits</span></p>
                 <p className="text-[10px] text-gray-400 mt-0.5">≈ ₹{((farmerUser?.total_biomass_sold || 0) * 0.75 * 50).toLocaleString()} redeemable value</p>
               </div>
@@ -385,7 +448,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
             {/* Biomass Price Sparkline (feature #10) */}
             <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 font-medium">Current Biomass Price (MSP)</p>
+                <p className="text-xs text-gray-500 font-medium">{t('biomass_price')}</p>
                 <p className="text-2xl font-black text-emerald-700 mt-0.5">₹2,500<span className="text-sm font-normal text-gray-500">/tonne</span></p>
                 <p className="text-[10px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> +13.6% from last season
@@ -401,7 +464,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
             {hasFields && (
               <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
                 <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                <h3 className="font-bold text-gray-900 text-sm">Active Harvest Pickup</h3>
+                <h3 className="font-bold text-gray-900 text-sm">{t('active_pickup')}</h3>
                 <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-full uppercase tracking-wide">In Progress</span>
               </div>
               <div className="p-4 space-y-4">
@@ -482,7 +545,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
         {activeTab === 'fields' && (
           <div className="p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-500">{myFields.length} registered fields</p>
+              <p className="text-xs text-gray-500">{myFields.length} {t('registered_fields')}</p>
               {/* Bug #1 fixed — opens farmer-specific harvest modal */}
               <button onClick={() => setShowRegisterHarvest(true)}
                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer transition-colors">
@@ -515,7 +578,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <MapPin className="w-8 h-8 text-emerald-600" />
                 </div>
-                <h3 className="font-bold text-gray-900 mb-1">No Fields Registered</h3>
+                <h3 className="font-bold text-gray-900 mb-1">{t('no_fields')}</h3>
                 <p className="text-sm text-gray-500 mb-4 max-w-xs mx-auto">Register your first field to start selling biomass and earning carbon credits.</p>
                 <button onClick={() => setShowRegisterHarvest(true)}
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md cursor-pointer transition-colors">
@@ -540,7 +603,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
             ) : (
               <>
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-gray-900 text-sm">Payment History</h3>
+                  <h3 className="font-bold text-gray-900 text-sm">{t('recent_transactions')}</h3>
                   <span className="text-xs text-gray-400">All amounts in ₹</span>
                 </div>
                 <div className="overflow-x-auto">
@@ -641,6 +704,7 @@ export default function FarmerDashboard({ farmerUser, onLogout, onRegisterClick 
         <RegisterHarvestModal
           onClose={() => setShowRegisterHarvest(false)}
           onSuccess={() => showToast('Harvest registered successfully!')}
+          t={t}
         />
       )}
       

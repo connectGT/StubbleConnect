@@ -8,21 +8,46 @@ import {
   CheckCircle2,
   Flame,
   ArrowRight,
-  AlertTriangle
+  Share2
 } from 'lucide-react';
 
 export default function ClusterDetailsPanel({
   cluster,
   onViewFullDetails
 }) {
-  if (!cluster) return null;
+  if (!cluster) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-xs flex flex-col items-center justify-center text-center h-full space-y-3 min-h-[400px]">
+        <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shadow-2xs">
+          <Share2 className="w-6 h-6" />
+        </div>
+        <div>
+          <h3 className="font-bold text-gray-900 text-sm">No Cluster Selected</h3>
+          <p className="text-xs text-gray-500 max-w-[220px] mt-1">
+            Click any cluster polygon or badge on the map to inspect its biomass volume, burning risk score, and logistics status.
+          </p>
+        </div>
+        <div className="px-3 py-1 bg-gray-50 rounded-full text-[10px] text-gray-400 font-medium border border-gray-100">
+          Spatial Clustering (DBSCAN)
+        </div>
+      </div>
+    );
+  }
 
   // Calculate SVG arc parameters for semi-circular gauge
   const radius = 60;
   const strokeWidth = 10;
-  const center = 75;
-  const score = cluster.riskScore || 85;
+  const score = cluster.riskScore ?? 82;
   const percentage = Math.min(Math.max(score / 100, 0), 1);
+  const farmsCount = cluster.farmsCount ?? cluster.farms_count ?? (cluster.farms ? cluster.farms.length : 8);
+  const totalBiomass = cluster.totalBiomass ?? cluster.total_biomass ?? 142;
+  const harvestWindow = cluster.harvestWindow || '18 – 20 Aug 2026';
+  const avgDistance = cluster.avgDistance || '12.5 km';
+  const nearestBuyer = cluster.nearestBuyer || 'GreenFuel Bio-CNG Plant';
+  const buyerLocation = cluster.buyerLocation || 'Bathinda, Punjab';
+  const status = cluster.status || 'Pending Route';
+  const riskLevel = cluster.riskLevel || cluster.risk_level || (score >= 65 ? 'High Risk' : score >= 35 ? 'Moderate Risk' : 'Low Risk');
+  const recommendedAction = cluster.recommendedAction || cluster.recommended_action || 'Priority collection suggested due to high burning risk.';
   
   // Circumference of half circle = PI * R
   const arcLength = Math.PI * radius;
@@ -38,7 +63,7 @@ export default function ClusterDetailsPanel({
           </h2>
           <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 shadow-2xs">
             <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-            <span>{cluster.riskLevel || 'High Risk'}</span>
+            <span>{riskLevel}</span>
           </div>
         </div>
 
@@ -50,7 +75,7 @@ export default function ClusterDetailsPanel({
               <Users className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Farms in Cluster</span>
             </div>
-            <span className="font-bold text-gray-900">{cluster.farmsCount}</span>
+            <span className="font-bold text-gray-900">{farmsCount}</span>
           </div>
 
           {/* Biomass */}
@@ -59,7 +84,7 @@ export default function ClusterDetailsPanel({
               <Sprout className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Total Biomass (Est.)</span>
             </div>
-            <span className="font-bold text-gray-900">{cluster.totalBiomass} Tonnes</span>
+            <span className="font-bold text-gray-900">{totalBiomass} Tonnes</span>
           </div>
 
           {/* Harvest Window */}
@@ -68,7 +93,7 @@ export default function ClusterDetailsPanel({
               <Calendar className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Harvest Window</span>
             </div>
-            <span className="font-bold text-gray-900">{cluster.harvestWindow}</span>
+            <span className="font-bold text-gray-900">{harvestWindow}</span>
           </div>
 
           {/* Avg Distance */}
@@ -77,7 +102,7 @@ export default function ClusterDetailsPanel({
               <Navigation className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Avg. Distance to Buyer</span>
             </div>
-            <span className="font-bold text-gray-900">{cluster.avgDistance}</span>
+            <span className="font-bold text-gray-900">{avgDistance}</span>
           </div>
 
           {/* Nearest Buyer */}
@@ -87,8 +112,8 @@ export default function ClusterDetailsPanel({
               <span>Nearest Buyer</span>
             </div>
             <div className="text-right">
-              <div className="font-bold text-gray-900">{cluster.nearestBuyer}</div>
-              <div className="text-[10px] text-gray-400">{cluster.buyerLocation}</div>
+              <div className="font-bold text-gray-900">{nearestBuyer}</div>
+              <div className="text-[10px] text-gray-400">{buyerLocation}</div>
             </div>
           </div>
 
@@ -99,7 +124,7 @@ export default function ClusterDetailsPanel({
               <span>Status</span>
             </div>
             <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 font-semibold rounded-md text-[11px] border border-emerald-200/60">
-              {cluster.status}
+              {status}
             </span>
           </div>
         </div>
@@ -155,7 +180,7 @@ export default function ClusterDetailsPanel({
                 <span className="text-xs font-semibold text-gray-400">/100</span>
               </div>
               <span className="text-[11px] font-bold text-red-600 mt-0.5">
-                {cluster.riskLevel || 'High Risk'}
+                {riskLevel}
               </span>
             </div>
           </div>
@@ -171,8 +196,7 @@ export default function ClusterDetailsPanel({
               Recommended Action
             </div>
             <div className="text-[10px] text-amber-800 leading-tight mt-0.5">
-              {cluster.recommendedAction ||
-                'Priority collection suggested due to high burning risk.'}
+              {recommendedAction}
             </div>
           </div>
         </div>

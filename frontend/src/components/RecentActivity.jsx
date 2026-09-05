@@ -19,10 +19,16 @@ export default function RecentActivity({ onViewAll }) {
   const [activities, setActivities] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/v1/analytics/activity-feed')
-      .then(res => res.json())
-      .then(data => setActivities(data))
-      .catch(err => console.error(err));
+    const fetchData = () => {
+      fetch('http://localhost:8000/api/v1/analytics/activity-feed')
+        .then(res => res.json())
+        .then(data => setActivities(data))
+        .catch(err => console.error("Could not fetch activities:", err));
+    };
+    
+    fetchData();
+    window.addEventListener('refresh-dashboard-data', fetchData);
+    return () => window.removeEventListener('refresh-dashboard-data', fetchData);
   }, []);
 
   return (
@@ -36,32 +42,39 @@ export default function RecentActivity({ onViewAll }) {
         </h3>
 
         <div className="space-y-3">
-          {activities.map((act) => {
-            const Icon = iconMap[act.type] || iconMap.default;
-            return (
-              <div key={act.id} className="flex items-start justify-between gap-2 text-xs">
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <div className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-100">
-                    <Icon className="w-3.5 h-3.5 text-emerald-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-gray-800 leading-tight truncate">
-                      {act.title}
-                    </p>
-                    {act.subtitle && (
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        {act.subtitle}
+          {activities.length === 0 ? (
+            <div className="py-8 text-center text-gray-400 text-xs flex flex-col items-center justify-center gap-1.5">
+              <Clock className="w-5 h-5 text-gray-300" />
+              <span>No recent activities logged yet.</span>
+            </div>
+          ) : (
+            activities.map((act) => {
+              const Icon = iconMap[act.type] || iconMap.default;
+              return (
+                <div key={act.id} className="flex items-start justify-between gap-2 text-xs">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-100">
+                      <Icon className="w-3.5 h-3.5 text-emerald-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-800 leading-tight truncate">
+                        {act.title}
                       </p>
-                    )}
+                      {act.subtitle && (
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          {act.subtitle}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <span className="text-[11px] text-gray-400 shrink-0 whitespace-nowrap">
-                  {act.time}
-                </span>
-              </div>
-            );
-          })}
+                  <span className="text-[11px] text-gray-400 shrink-0 whitespace-nowrap">
+                    {act.time}
+                  </span>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
