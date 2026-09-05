@@ -73,10 +73,17 @@ def build_farmer_profile(farmer: Farmer, db: Session) -> dict:
         "fields": fields_data,
     }
 
+def normalize_phone(p: str) -> str:
+    cp = p.replace("+91", "").replace(" ", "").replace("-", "").strip()
+    if len(cp) > 10 and cp.startswith("91"):
+        cp = cp[2:]
+    return cp
+
 @router.post("/register")
 def register_farmer(payload: FarmerRegisterRequest, db: Session = Depends(get_db)):
+    clean_phone = normalize_phone(payload.phone)
     # Check if farmer already exists
-    existing = db.query(Farmer).filter(Farmer.phone == payload.phone).first()
+    existing = db.query(Farmer).filter(Farmer.phone == clean_phone).first()
     if existing:
         # Return existing profile instead of error
         profile = build_farmer_profile(existing, db)
@@ -84,7 +91,7 @@ def register_farmer(payload: FarmerRegisterRequest, db: Session = Depends(get_db
     
     new_farmer = Farmer(
         name=payload.name,
-        phone=payload.phone,
+        phone=clean_phone,
         village=payload.village,
         district=payload.district,
         state=payload.state,
@@ -105,11 +112,12 @@ def register_farmer(payload: FarmerRegisterRequest, db: Session = Depends(get_db
 @router.post("/send-otp")
 def send_otp(phone: str, db: Session = Depends(get_db)):
     """Simulate OTP send. In production, integrate Twilio/MSG91."""
-    farmer = db.query(Farmer).filter(Farmer.phone == phone).first()
+    clean_phone = normalize_phone(phone)
+    farmer = db.query(Farmer).filter(Farmer.phone == clean_phone).first()
     if not farmer:
         raise HTTPException(status_code=404, detail="Phone number not registered. Please sign up first.")
     # For demo: OTP is always 123456
-    return {"status": "sent", "message": f"OTP sent to +91{phone}", "demo_otp": "123456"}
+    return {"status": "sent", "message": f"OTP sent to +91{clean_phone}", "demo_otp": "123456"}
 
 @router.post("/verify-otp")
 def verify_otp(payload: FarmerLoginRequest, db: Session = Depends(get_db)):
@@ -117,7 +125,8 @@ def verify_otp(payload: FarmerLoginRequest, db: Session = Depends(get_db)):
     if len(payload.otp) != 6 or not payload.otp.isdigit():
         raise HTTPException(status_code=400, detail="OTP must be 6 digits")
     
-    farmer = db.query(Farmer).filter(Farmer.phone == payload.phone).first()
+    clean_phone = normalize_phone(payload.phone)
+    farmer = db.query(Farmer).filter(Farmer.phone == clean_phone).first()
     if not farmer:
         raise HTTPException(status_code=404, detail="Phone not registered. Please sign up first.")
     
@@ -127,7 +136,8 @@ def verify_otp(payload: FarmerLoginRequest, db: Session = Depends(get_db)):
 @router.get("/me")
 def get_farmer_profile(phone: str, db: Session = Depends(get_db)):
     """Get farmer profile and their registered fields by phone number."""
-    farmer = db.query(Farmer).filter(Farmer.phone == phone).first()
+    clean_phone = normalize_phone(phone)
+    farmer = db.query(Farmer).filter(Farmer.phone == clean_phone).first()
     if not farmer:
         raise HTTPException(status_code=404, detail="Farmer not found")
     profile = build_farmer_profile(farmer, db)

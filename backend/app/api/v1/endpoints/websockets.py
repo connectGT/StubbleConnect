@@ -3,7 +3,8 @@ import asyncio
 import json
 import math
 import uuid
-from geoalchemy2.shape import to_shape
+from geoalchemy2 import Geometry
+from sqlalchemy import func
 from app.db.database import SessionLocal
 from app.db.models import Field, Buyer
 
@@ -44,15 +45,14 @@ ACTIVE_TARGETS = set()
 def get_hubs():
     db = SessionLocal()
     try:
-        buyers = db.query(Buyer).all()
+        buyers_query = db.query(Buyer, func.ST_Y(Buyer.geom).label("lat"), func.ST_X(Buyer.geom).label("lng")).all()
         hubs = []
-        for b in buyers:
-            pt = to_shape(b.geom)
+        for b, lat, lng in buyers_query:
             hubs.append({
                 "id": b.id,
                 "name": b.plant_name,
                 "type": b.facility_type,
-                "coords": [pt.y, pt.x]
+                "coords": [lat, lng]
             })
         return hubs
     finally:
@@ -61,13 +61,12 @@ def get_hubs():
 def get_pending_fields():
     db = SessionLocal()
     try:
-        fields = db.query(Field).filter(Field.status == "Pending").all()
+        fields_query = db.query(Field, func.ST_Y(Field.geom).label("lat"), func.ST_X(Field.geom).label("lng")).filter(Field.status == "Pending").all()
         res = []
-        for f in fields:
-            pt = to_shape(f.geom)
+        for f, lat, lng in fields_query:
             res.append({
                 "id": f.id,
-                "coords": [pt.y, pt.x],
+                "coords": [lat, lng],
                 "biomass": f.biomass
             })
         return res

@@ -83,13 +83,7 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
         .then(res => res.json())
         .then(data => {
           if(data.status === 'success') {
-            const pathMap = {};
-            data.data.forEach(t => {
-              if (t.path && t.path.length > 0) {
-                pathMap[t.id] = t.path;
-              }
-            });
-            setTruckPaths(pathMap);
+            setTruckPaths(data.data);
           }
         });
     };
@@ -118,14 +112,8 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
       fetch('http://localhost:8000/api/v1/trucks/paths')
         .then(res => res.json())
         .then(data => {
-          if(data.status === 'success' && Array.isArray(data.data)) {
-            const pathMap = {};
-            data.data.forEach(t => {
-              if (t.path && t.path.length > 0) {
-                pathMap[t.id] = t;
-              }
-            });
-            setTruckPaths(pathMap);
+          if(data.status === 'success') {
+            setTruckPaths(data.data);
           }
         }).catch(err => console.log(err));
     }, 5000);

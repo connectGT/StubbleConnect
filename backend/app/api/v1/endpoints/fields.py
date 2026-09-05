@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.schemas.schemas import FieldRegisterRequest
 from app.db.database import get_db
-from app.db.models import Field
+from app.db.models import Field, Farmer
 
 from app.ml_engine.risk_model.burning_risk import calculate_dynamic_burning_risk
 
@@ -53,6 +53,26 @@ def register_field(payload: FieldRegisterRequest, db: Session = Depends(get_db))
     if len(clean_phone) > 10 and clean_phone.startswith("91"):
         clean_phone = clean_phone[2:]
     
+    # Auto-create Farmer if they don't exist
+    existing_farmer = db.query(Farmer).filter(Farmer.phone == clean_phone).first()
+    if not existing_farmer:
+        import random
+        from datetime import date
+        fpo = f"#{random.randint(88000, 88999)}"
+        new_farmer = Farmer(
+            name=payload.farmer_name,
+            phone=clean_phone,
+            village=payload.village,
+            district=payload.district,
+            state=payload.state,
+            fpo_id=fpo,
+            tier="Green",
+            joined_date=str(date.today()),
+            is_verified=True
+        )
+        db.add(new_farmer)
+        db.commit()
+
     new_field = Field(
         farmer_name=payload.farmer_name,
         phone=clean_phone,
