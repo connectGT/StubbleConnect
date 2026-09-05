@@ -1,8 +1,8 @@
-﻿from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import asyncio
 import json
 import math
-import os
+from pathlib import Path
 
 router = APIRouter(prefix="/ws", tags=["WebSockets"])
 
@@ -26,9 +26,10 @@ manager = ConnectionManager()
 def interpolate_points(p1, p2, fraction):
     return [p1[0] + (p2[0] - p1[0]) * fraction, p1[1] + (p2[1] - p1[1]) * fraction]
 
-# Load Real OSRM Road Paths
-route_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))), 'route_coords.json')
-with open(route_file, 'r') as f:
+# Load Real OSRM Road Paths — file is at project root (sih/route_coords.json)
+# __file__ = sih/backend/app/api/v1/endpoints/websockets.py  →  parents[5] = sih/
+_route_file = Path(__file__).parents[5] / 'route_coords.json'
+with open(_route_file, 'r') as f:
     real_routes = json.load(f)
 
 TRUCKS = [

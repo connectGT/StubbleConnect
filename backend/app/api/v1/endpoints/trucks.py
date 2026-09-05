@@ -1,11 +1,11 @@
-﻿from fastapi import APIRouter
+from fastapi import APIRouter
 import json
-import os
+from pathlib import Path
 
 router = APIRouter(prefix="/trucks", tags=["Trucks"])
 
-# Load the real OSRM road paths from file
-_route_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))), 'route_coords.json')
+# __file__ = sih/backend/app/api/v1/endpoints/trucks.py  →  parents[5] = sih/
+_route_file = Path(__file__).parents[5] / 'route_coords.json'
 with open(_route_file, 'r') as f:
     _real_routes = json.load(f)
 
