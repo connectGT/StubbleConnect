@@ -282,25 +282,45 @@ export default function Sidebar({
         </div>
 
         {/* Bottom User Role Toggle */}
-        <div className="p-3 border-t border-[#12382b]">
-          <div className="bg-[#071c15] border border-[#133d2e] rounded-xl p-3 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-emerald-800/60 border border-emerald-600/40 flex items-center justify-center text-emerald-300">
-                <User className="w-4 h-4" />
+        <div className="p-3 border-t border-[#12382b] space-y-2">
+          {/* 1. Truck Driver Mode Launcher Button (ABOVE) */}
+          <button
+            onClick={() => setUserRole('driver')}
+            className="w-full py-2.5 px-3 bg-gradient-to-r from-[#071c15] via-[#0e2c21] to-[#071c15] hover:from-[#12382b] hover:to-[#0a251c] border border-emerald-500/50 rounded-xl text-xs font-black text-emerald-400 hover:text-white shadow-lg flex items-center justify-between transition-all group cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">🚚</span>
+              <div className="text-left">
+                <div className="leading-tight text-white font-bold">Truck Driver Mode</div>
+                <div className="text-[9px] text-[#6b8e81] font-normal">Parali Pickup & GPS Navigation</div>
               </div>
-              <div>
-                <div className="text-xs font-semibold text-white">
-                  {isFarmer ? 'Farmer Mode' : 'Admin Mode'}
-                </div>
-                <button
-                  onClick={() => {
-                    setUserRole(isFarmer ? 'admin' : 'farmer');
-                    setOpenAccordion(null); // Reset accordion on role switch
-                  }}
-                  className="text-[11px] text-[#6b8e81] hover:text-emerald-400 underline flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  Switch Role
-                </button>
+            </div>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          </button>
+
+          {/* 2. Biogas Plant Buyer Portal Launcher Button (BELOW) */}
+          <button
+            onClick={() => setUserRole('buyer')}
+            className="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-950 via-[#0a251c] to-[#0f3427] hover:from-[#12382b] hover:to-[#0a251c] border border-emerald-500/50 rounded-xl text-xs font-black text-emerald-400 hover:text-white shadow-lg flex items-center justify-between transition-all group cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">🏭</span>
+              <div className="text-left">
+                <div className="leading-tight text-white font-bold">Biogas Plant Buyer</div>
+                <div className="text-[9px] text-[#6b8e81] font-normal">CBG Procurement Portal</div>
+              </div>
+            </div>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          </button>
+
+          {/* 3. Admin / Farmer Toggle */}
+          <div className="bg-[#071c15] border border-[#133d2e] rounded-xl p-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-emerald-800/60 border border-emerald-600/40 flex items-center justify-center text-emerald-300">
+                <User className="w-3.5 h-3.5" />
+              </div>
+              <div className="text-[11px] font-semibold text-white">
+                {isFarmer ? 'Farmer Mode' : 'Admin Mode'}
               </div>
             </div>
             <button
@@ -308,10 +328,9 @@ export default function Sidebar({
                 setUserRole(isFarmer ? 'admin' : 'farmer');
                 setOpenAccordion(null);
               }}
-              title="Toggle Role"
-              className="p-1.5 rounded-lg bg-[#0e2c21] hover:bg-[#154132] text-emerald-400 transition-colors cursor-pointer"
+              className="text-[10px] bg-[#0e2c21] hover:bg-[#154132] text-emerald-400 px-2 py-1 rounded-lg font-bold transition-colors cursor-pointer"
             >
-              <ArrowRightLeft className="w-3.5 h-3.5" />
+              Switch to {isFarmer ? 'Admin' : 'Farmer'}
             </button>
           </div>
         </div>
