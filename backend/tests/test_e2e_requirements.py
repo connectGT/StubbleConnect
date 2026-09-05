@@ -590,8 +590,6 @@ class TestR3BiogasPlantsAndClusterPolygons(unittest.TestCase):
         db = SessionLocal()
         try:
             buyers = db.query(Buyer).all()
-            if len(buyers) < 5:
-                self.skipTest(f"Requirement R3 (Milestone 2): 5+ buyers pending M2 implementation, currently {len(buyers)}")
             self.assertGreaterEqual(len(buyers), 5,
                                     f"Requirement R3 mandates expanding Biogas Plants (buyers) count to 5+, found {len(buyers)}")
 
@@ -614,8 +612,6 @@ class TestR3BiogasPlantsAndClusterPolygons(unittest.TestCase):
 
         # Filter out mock fallback if any
         real_clusters = [c for c in clusters_data if c.get("id") != "c-fallback"]
-        if len(real_clusters) < 5:
-            self.skipTest(f"Requirement R3 (Milestone 2): 5+ cluster polygons pending M2 implementation, currently {len(real_clusters)}")
         self.assertGreaterEqual(len(real_clusters), 5,
                                 f"Requirement R3 mandates 5+ cluster polygons across Punjab, found {len(real_clusters)}")
 
@@ -653,9 +649,6 @@ class TestR3BiogasPlantsAndClusterPolygons(unittest.TestCase):
             buyers_list = [(b.plant_name, lat, lng) for b, lat, lng in buyers_query]
         finally:
             db.close()
-
-        if len(buyers_list) < 5:
-            self.skipTest("Requirement R3 (Milestone 2): Exterior plant positioning pending M2 implementation")
 
         self.assertGreater(len(buyers_list), 0, "No buyers found in database")
         self.assertGreater(len(clusters), 0, "No clusters found in database")

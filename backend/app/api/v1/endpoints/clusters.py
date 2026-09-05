@@ -1,11 +1,20 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.db.models import Cluster, Field
+from app.db.models import Cluster, Field, Buyer
 from app.ml_engine.clustering.dbscan_cluster import cluster_farms_dbscan
+from app.ml_engine.risk_model.burning_risk import calculate_dynamic_burning_risk
 import numpy as np
 from scipy.spatial import ConvexHull, QhullError
 import json
+import math
+
+def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    r = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 router = APIRouter(prefix="/clusters", tags=["Clusters"])
 
@@ -128,7 +137,16 @@ def recompute_clusters(db: Session = Depends(get_db)):
     db.query(Field).update({Field.cluster_id: None})
     db.query(Cluster).delete()
     
+    # Query buyers to associate nearest buyer to each cluster
+    buyers = db.query(
+        Buyer,
+        func.ST_Y(Buyer.geom).label('lat'),
+        func.ST_X(Buyer.geom).label('lng')
+    ).all()
+
+    field_map = {f.id: f for f, lat, lng in fields}
     active_clusters = 0
+
     # 4. Save new clusters and assign fields
     for idx, cres in enumerate(clusters_res):
         cluster_farms = cres["farms"]
@@ -163,21 +181,55 @@ def recompute_clusters(db: Session = Depends(get_db)):
                 wkt_poly = f"SRID=4326;POLYGON(({c_lng-0.02} {c_lat+0.02}, {c_lng+0.02} {c_lat+0.02}, {c_lng+0.02} {c_lat-0.02}, {c_lng-0.02} {c_lat-0.02}, {c_lng-0.02} {c_lat+0.02}))"
             
         wkt_center = f"SRID=4326;POINT({c_lng} {c_lat})"
+
+        # Calculate cluster dynamic risk score as rounded average of active member fields' dynamic risk scores
+        member_scores = [
+            calculate_dynamic_burning_risk(field_map[f["id"]].harvest_date, field_map[f["id"]].status)
+            for f in cluster_farms if f["id"] in field_map
+        ]
+        avg_risk = int(round(sum(member_scores) / len(member_scores))) if member_scores else 10
+        avg_risk = min(100, max(5, avg_risk))
+
+        if avg_risk >= 75:
+            risk_level = "High Risk"
+            action = "Priority collection suggested due to high burning risk."
+        elif avg_risk >= 45:
+            risk_level = "Moderate Risk"
+            action = "Standard collection route scheduled for morning batch."
+        else:
+            risk_level = "Low Risk"
+            action = "Harvest window clear. Normal queue dispatch."
+
+        # Find nearest buyer facility
+        nearest_buyer_name = "GreenFuel Bio-CNG Plant (Bathinda)"
+        min_dist_str = "4.2 km"
+        if buyers:
+            best_dist = float('inf')
+            best_buyer = None
+            for b, b_lat, b_lng in buyers:
+                if b_lat is not None and b_lng is not None:
+                    d = _haversine(c_lat, c_lng, b_lat, b_lng)
+                    if d < best_dist:
+                        best_dist = d
+                        best_buyer = b
+            if best_buyer:
+                nearest_buyer_name = best_buyer.plant_name
+                min_dist_str = f"{best_dist:.1f} km"
             
         new_cluster = Cluster(
             number=idx+1,
             name=f"Cluster #{idx+1:02d}",
-            risk_level="High Risk" if cres["total_biomass_tonnes"] > 50 else ("Moderate Risk" if cres["total_biomass_tonnes"] > 30 else "Low Risk"),
-            risk_score=85 if cres["total_biomass_tonnes"] > 50 else (45 if cres["total_biomass_tonnes"] > 30 else 15),
+            risk_level=risk_level,
+            risk_score=avg_risk,
             farms_count=cres["farms_count"],
             total_biomass=cres["total_biomass_tonnes"],
             center_geom=wkt_center,
             polygon_geom=wkt_poly,
             status="Generated",
             harvest_window="Oct 20 - Oct 28",
-            avg_distance="4.2 km",
-            buyer_location="GreenFuel Plant Bathinda",
-            recommended_action="AI generated collection zone."
+            avg_distance=min_dist_str,
+            buyer_location=nearest_buyer_name,
+            recommended_action=action
         )
         db.add(new_cluster)
         db.flush() # To get new_cluster.id

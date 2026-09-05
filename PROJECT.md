@@ -41,8 +41,8 @@ StubbleConnect is a full-stack platform consisting of:
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M1 | Core Data Models, Field States & Data Sync | Features 1, 2, 3, 4, 5, 6, 7, 8 (R1 & R2) | None | IN_PROGRESS |
-| M2 | Biogas Plants, Multi-Cluster Polygons & Dynamic Risk | Features 9, 10, 11, 12, 13, 14 (R3, R2 exclusion, R5) | M1 | PLANNED |
+| M1 | Core Data Models, Field States & Data Sync | Features 1, 2, 3, 4, 5, 6, 7, 8 (R1 & R2) | None | DONE |
+| M2 | Biogas Plants, Multi-Cluster Polygons & Dynamic Risk | Features 9, 10, 11, 12, 13, 14 (R3, R2 exclusion, R5) | M1 | IN_PROGRESS |
 | M3 | Dynamic Truck Logistics & Mixed Hub Simulation | Features 15, 16, 17, 18, 19 (R4, integration & verification) | M1, M2 | PLANNED |
 
 ---

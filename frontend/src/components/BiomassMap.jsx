@@ -50,8 +50,8 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
           if(data.status === 'success') {
             const coloredData = data.data.map((cl, i) => ({
               ...cl,
-              color: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899'][i % 5],
-              borderColor: ['#059669', '#d97706', '#2563eb', '#7c3aed', '#db2777'][i % 5]
+              color: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4'][i % 6],
+              borderColor: ['#059669', '#d97706', '#2563eb', '#7c3aed', '#db2777', '#0891b2'][i % 6]
             }));
             setLocalClusters(coloredData);
           }
@@ -106,12 +106,34 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
           ...prev,
           [message.data.truck_id]: message.data
         }));
+      } else if (message.type === 'FIELD_COLLECTED') {
+        setLocalFields(prev => prev.map(f => 
+          f.id === message.data.field_id ? { ...f, status: message.data.new_status } : f
+        ));
       }
     };
     
+    // Refresh truck paths every 5 seconds since they are dynamically generated now
+    const pathInterval = setInterval(() => {
+      fetch('http://localhost:8000/api/v1/trucks/paths')
+        .then(res => res.json())
+        .then(data => {
+          if(data.status === 'success' && Array.isArray(data.data)) {
+            const pathMap = {};
+            data.data.forEach(t => {
+              if (t.path && t.path.length > 0) {
+                pathMap[t.id] = t;
+              }
+            });
+            setTruckPaths(pathMap);
+          }
+        }).catch(err => console.log(err));
+    }, 5000);
+
     return () => {
       window.removeEventListener('refresh-dashboard-data', fetchData);
       ws.close();
+      clearInterval(pathInterval);
     };
   }, []);
 
@@ -188,13 +210,25 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
     });
   };
 
-  // Custom DivIcon for Biomass Buyer Factory
-  const createBuyerIcon = () => {
+  // Custom DivIcon for Biomass Buyer Factory or Hub
+  const createBuyerIcon = (type) => {
+    const isHub = type && type.includes('Hub');
+    const bgColor = isHub ? '#3b82f6' : '#dc2626';
+    const svgIcon = isHub ? `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 21h18"></path><path d="M4 21V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v16"></path><path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"></path>
+      </svg>` : `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+        <path d="M18 16h2"/>
+        <path d="M6 16h2"/>
+      </svg>`;
+
     return L.divIcon({
       className: 'custom-leaflet-div-icon',
       html: `
         <div style="
-          background-color: #dc2626;
+          background-color: ${bgColor};
           padding: 4px 6px;
           border-radius: 6px;
           border: 2px solid white;
@@ -205,11 +239,7 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
           box-shadow: 0 4px 10px rgba(0,0,0,0.5);
           cursor: pointer;
         ">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
-            <path d="M18 16h2"/>
-            <path d="M6 16h2"/>
-          </svg>
+          ${svgIcon}
         </div>
       `,
       iconSize: [28, 28],
@@ -246,6 +276,11 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
       id="biomass-map-wrapper"
       className="relative w-full h-[460px] lg:h-[500px] rounded-xl overflow-hidden shadow-xs border border-gray-200/90 bg-slate-900"
     >
+      <style>{`
+        .custom-truck-icon {
+          transition: margin 0.5s linear, transform 0.5s linear;
+        }
+      `}</style>
       {/* Top Left: Map View Selector Dropdown */}
       <div className="absolute top-3 left-3 z-[1000]">
         <div className="relative">
@@ -625,7 +660,7 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
             <Marker
               key={b.id}
               position={b.coords}
-              icon={createBuyerIcon()}
+              icon={createBuyerIcon(b.type)}
               eventHandlers={{
                 click: () => onOpenBuyerDetails && onOpenBuyerDetails(b),
               }}
@@ -670,7 +705,7 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
               icon={L.divIcon({
                 className: 'custom-truck-icon',
                 html: `
-                  <div style="position:relative;">
+                  <div style="position:relative; transition: all 0.5s linear;">
                     <div style="
                       background-color: ${truck.color || '#3b82f6'};
                       width: 34px;
