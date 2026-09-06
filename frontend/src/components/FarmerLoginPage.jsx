@@ -98,7 +98,7 @@ export default function FarmerLoginPage({ onLogin, onReturnToAdmin }) {
     try {
       if (mode === 'signup') {
         // Register first
-        const res = await fetch('http://localhost:8000/api/v1/farmers/register', {
+        const res = await fetch(`http://${window.location.hostname}:8000/api/v1/farmers/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: name.trim(), phone, village, district: 'Bathinda', state: 'Punjab' })
@@ -106,14 +106,14 @@ export default function FarmerLoginPage({ onLogin, onReturnToAdmin }) {
         const data = await res.json();
         if (res.ok && data.status !== 'error') {
           // Now send OTP
-          await fetch(`http://localhost:8000/api/v1/farmers/send-otp?phone=${phone}`, { method: 'POST' });
+          await fetch(`http://${window.location.hostname}:8000/api/v1/farmers/send-otp?phone=${phone}`, { method: 'POST' });
           setStep('otp');
         } else {
           setError(data.detail || 'Registration failed');
         }
       } else {
         // Login flow
-        const res = await fetch(`http://localhost:8000/api/v1/farmers/send-otp?phone=${phone}`, { method: 'POST' });
+        const res = await fetch(`http://${window.location.hostname}:8000/api/v1/farmers/send-otp?phone=${phone}`, { method: 'POST' });
         if (res.ok) {
           setStep('otp');
         } else {
@@ -133,7 +133,7 @@ export default function FarmerLoginPage({ onLogin, onReturnToAdmin }) {
     if (otp.length !== 6) return;
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8000/api/v1/farmers/verify-otp', {
+      const res = await fetch(`http://${window.location.hostname}:8000/api/v1/farmers/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, otp })
@@ -183,9 +183,7 @@ export default function FarmerLoginPage({ onLogin, onReturnToAdmin }) {
 
       {/* Logo */}
       <div className="flex items-center gap-3 mb-7">
-        <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-900/50">
-          <Leaf className="w-7 h-7 text-white" />
-        </div>
+        <img src="/logo.jpg?v=2" alt="StubbleConnect Logo" className="w-12 h-12 rounded-2xl object-cover shadow-lg shadow-emerald-900/50 bg-emerald-500" />
         <div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">StubbleConnect</h1>
           <p className="text-emerald-400 text-xs font-medium">AI-Powered Biomass Platform</p>

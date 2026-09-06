@@ -1,15 +1,18 @@
 # Progress — challenger_m1_2
 
-Last visited: 2026-09-05T19:42:00Z
+Last visited: 2026-09-06T01:17:00Z
 
 ## Status
-- [x] Initialized BRIEFING.md and DISPATCH.md
-- [x] Read PROJECT.md, ORIGINAL_REQUEST.md, worker_m1/handoff.md
-- [x] Inspect frontend code and contracts (QuickActionModal, FarmerDashboard, ListViewModal, BiomassMap, mockData.js)
-- [x] Designed and executed empirical verification test suite (`frontend/tests/test_m1_frontend_contracts.mjs`)
-- [x] Tested custom event bus (`refresh-dashboard-data`), event listeners, and cleanup logic
-- [x] Stress-tested adversarial edge cases (whitespace phone inputs, punctuation, null/undefined states, status values)
-- [x] Identified 5 specific findings (2 HIGH, 2 MEDIUM, 1 INFO/M3 backlog)
-- [ ] Update BRIEFING.md with findings and attack surface
-- [ ] Write handoff.md following 5-component report standard
+- [x] Initialized BRIEFING.md and appended new dispatch to DISPATCH.md
+- [x] Read ORIGINAL_REQUEST.md, worker_m1_farmer/handoff.md, orchestrator_3/PROJECT.md
+- [x] Reviewed backend/app/api/v1/endpoints/farmers.py and frontend/src/components/FarmerDashboard.jsx
+- [x] Executed baseline test suites (pytest backend tests, npm test scripts)
+- [ ] Build and execute comprehensive empirical test harness for:
+  - [ ] 1. build_farmer_profile() behavior for 'Completed' vs 'Pending' vs other states
+  - [ ] 2. Total earnings and biomass calculations (rates, multipliers, fallbacks)
+  - [ ] 3. Tab switching (internal vs external props, default tab mismatch) and badge rendering
+- [ ] Record empirical observations, logic chains, caveats, and conclusions
+- [ ] Update BRIEFING.md
+- [ ] Write handoff.md with definitive APPROVE/REJECT verdict
 - [ ] Send coordination message to parent
+

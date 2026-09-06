@@ -11,7 +11,7 @@ export default function PlannedRoutes({ onViewAll, onSelectRoute }) {
 
   useEffect(() => {
     const fetchData = () => {
-      fetch('http://localhost:8000/api/v1/routes')
+      fetch(`http://${window.location.hostname}:8000/api/v1/routes`)
         .then(res => res.json())
         .then(data => {
           if (data.status === 'success') {

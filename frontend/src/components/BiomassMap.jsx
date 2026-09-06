@@ -44,7 +44,7 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
   useEffect(() => {
     const fetchData = () => {
       // Fetch Clusters
-      fetch('http://localhost:8000/api/v1/clusters')
+      fetch(`http://${window.location.hostname}:8000/api/v1/clusters`)
         .then(res => res.json())
         .then(data => {
           if(data.status === 'success') {
@@ -58,28 +58,28 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
         });
 
       // Fetch Fields
-      fetch('http://localhost:8000/api/v1/fields')
+      fetch(`http://${window.location.hostname}:8000/api/v1/fields`)
         .then(res => res.json())
         .then(data => {
           if(data.status === 'success') setLocalFields(data.data);
         });
 
       // Fetch Buyers
-      fetch('http://localhost:8000/api/v1/buyers')
+      fetch(`http://${window.location.hostname}:8000/api/v1/buyers`)
         .then(res => res.json())
         .then(data => {
           if(data.status === 'success') setLocalBuyers(data.data);
         });
 
       // Fetch Routes
-      fetch('http://localhost:8000/api/v1/routes')
+      fetch(`http://${window.location.hostname}:8000/api/v1/routes`)
         .then(res => res.json())
         .then(data => {
           if(data.status === 'success') setLocalRoutes(data.data);
         });
 
       // Fetch Truck Paths from backend for polyline overlay
-      fetch('http://localhost:8000/api/v1/trucks/paths')
+      fetch(`http://${window.location.hostname}:8000/api/v1/trucks/paths`)
         .then(res => res.json())
         .then(data => {
           if(data.status === 'success') {
@@ -92,7 +92,7 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
     window.addEventListener('refresh-dashboard-data', fetchData);
     
     // WebSocket for Live Tracking
-    const ws = new WebSocket('ws://localhost:8000/api/v1/ws/tracking');
+    const ws = new WebSocket(`ws://${window.location.hostname}:8000/api/v1/ws/tracking`);
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === 'TRUCK_UPDATE') {
@@ -109,7 +109,7 @@ export default function BiomassMap({ selectedCluster, setSelectedCluster, onOpen
     
     // Refresh truck paths every 5 seconds since they are dynamically generated now
     const pathInterval = setInterval(() => {
-      fetch('http://localhost:8000/api/v1/trucks/paths')
+      fetch(`http://${window.location.hostname}:8000/api/v1/trucks/paths`)
         .then(res => res.json())
         .then(data => {
           if(data.status === 'success') {

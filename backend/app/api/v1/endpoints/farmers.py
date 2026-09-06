@@ -10,8 +10,15 @@ from datetime import date
 
 router = APIRouter(prefix="/farmers", tags=["Farmers"])
 
-def generate_fpo_id():
-    return f"#{random.randint(88000, 88999)}"
+def generate_fpo_id(db: Session = None):
+    for _ in range(50):
+        fpo = f"#{random.randint(88000, 88999)}"
+        if db is not None:
+            if not db.query(Farmer).filter(Farmer.fpo_id == fpo).first():
+                return fpo
+        else:
+            return fpo
+    return f"#{random.randint(10000, 99999)}"
 
 def field_status(harvest_date_str: str) -> tuple:
     """Return (status_label, status_color) based on harvest_date vs today."""
@@ -43,10 +50,14 @@ def build_farmer_profile(farmer: Farmer, db: Session) -> dict:
     total_earnings = 0.0
     
     for i, (f, lat, lng) in enumerate(fields_query):
-        status, color = field_status(f.harvest_date or "")
+        if f.status == "Completed":
+            status = "Completed"
+            color = "emerald"
+        else:
+            status, color = field_status(f.harvest_date or "")
         biomass = f.biomass or round((f.acres or 0) * 2.5, 1)
-        total_biomass += biomass if status == "Sold & Paid" else 0
-        total_earnings += biomass * 2500 if status == "Sold & Paid" else 0
+        total_biomass += biomass if (status == "Completed" or status == "Sold & Paid") else 0
+        total_earnings += biomass * 2500 if (status == "Completed" or status == "Sold & Paid") else 0
         fields_data.append({
             "id": f.id,
             "name": f"Farm {chr(65+i)}",  # Farm A, Farm B, Farm C...
@@ -65,7 +76,7 @@ def build_farmer_profile(farmer: Farmer, db: Session) -> dict:
         "phone": farmer.phone,
         "village": farmer.village,
         "district": farmer.district,
-        "fpo_id": farmer.fpo_id or generate_fpo_id(),
+        "fpo_id": farmer.fpo_id or generate_fpo_id(db),
         "tier": farmer.tier or "Green",
         "joined_date": farmer.joined_date or str(date.today()),
         "total_biomass_sold": round(total_biomass, 1),
@@ -95,7 +106,7 @@ def register_farmer(payload: FarmerRegisterRequest, db: Session = Depends(get_db
         village=payload.village,
         district=payload.district,
         state=payload.state,
-        fpo_id=generate_fpo_id(),
+        fpo_id=generate_fpo_id(db),
         tier="Green",
         joined_date=str(date.today()),
         is_verified=True,

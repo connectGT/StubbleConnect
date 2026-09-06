@@ -94,7 +94,7 @@ export default function Sidebar({
         <div className="p-5 pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src="/logo.jpg" alt="StubbleConnect Logo" className="w-9 h-9 rounded-lg object-cover border border-emerald-500/30 shadow-inner" />
+              <img src="/logo.jpg?v=2" alt="StubbleConnect Logo" className="w-9 h-9 rounded-lg object-cover border border-emerald-500/30 shadow-inner" />
               <div>
                 <h1 className="text-white font-bold text-lg tracking-tight leading-none">
                   Stubble<span className="text-emerald-400">Connect</span>

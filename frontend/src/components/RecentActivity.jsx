@@ -20,7 +20,7 @@ export default function RecentActivity({ onViewAll }) {
 
   useEffect(() => {
     const fetchData = () => {
-      fetch('http://localhost:8000/api/v1/analytics/activity-feed')
+      fetch(`http://${window.location.hostname}:8000/api/v1/analytics/activity-feed`)
         .then(res => res.json())
         .then(data => setActivities(data))
         .catch(err => console.error("Could not fetch activities:", err));

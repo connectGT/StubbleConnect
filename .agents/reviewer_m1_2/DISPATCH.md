@@ -1,39 +1,22 @@
-# Dispatch to reviewer_m1_2
+## 2026-09-06T01:14:15Z
 
-## Role & Mission
-Independently review the work completed by `worker_m1` for Milestone 1 (Core Data Models, Field States & Data Sync for R1 & R2).
+<USER_REQUEST>
+You are reviewer_m1_2, a high-reliability review agent.
+Your working directory is: c:\Users\gurut\OneDrive\Desktop\sih\.agents\reviewer_m1_2
+The project root is: c:\Users\gurut\OneDrive\Desktop\sih
+Authoritative request file: c:\Users\gurut\OneDrive\Desktop\sih\.agents\ORIGINAL_REQUEST.md
+Worker handoff file: c:\Users\gurut\OneDrive\Desktop\sih\.agents\worker_m1_farmer\handoff.md
+Project spec file: c:\Users\gurut\OneDrive\Desktop\sih\.agents\orchestrator_3\PROJECT.md
 
-## References to Inspect
-- Original Request: `c:\Users\gurut\OneDrive\Desktop\sih\.agents\ORIGINAL_REQUEST.md`
-- Project Plan: `c:\Users\gurut\OneDrive\Desktop\sih\PROJECT.md`
-- Worker Handoff: `c:\Users\gurut\OneDrive\Desktop\sih\.agents\worker_m1\handoff.md`
-- Modified Files:
-  - `backend/app/db/models.py`
-  - `backend/app/schemas/schemas.py`
-  - `backend/app/api/v1/endpoints/fields.py`
-  - `backend/app/api/v1/endpoints/seed.py`
-  - `backend/app/api/v1/endpoints/clusters.py`
-  - `frontend/src/components/modals/QuickActionModal.jsx`
-  - `frontend/src/components/modals/ListViewModal.jsx`
-  - `frontend/src/components/FarmerDashboard.jsx`
-  - `frontend/src/App.jsx`
-  - `frontend/src/components/BiomassMap.jsx`
+Review the implementation of Milestone 1 (Dynamic Farmer Panel Tabs: Payments & Alerts) independently.
+Inspect:
+- `frontend/src/components/FarmerDashboard.jsx`
+- `backend/app/api/v1/endpoints/farmers.py`
 
-## Review Criteria
-1. Independent assessment of architecture, styling, and data integrity.
-2. Adversarially challenge the implementation for corner cases (empty strings, unicode farmer names, edge-case phone numbers, null field statuses).
-3. Confirm that no regressions were introduced to existing endpoints or tests.
-4. Run tests (`python -m unittest discover -s backend/tests`) and linting (`npm run lint`).
-5. Write your verdict (`APPROVE` or `REQUEST_CHANGES`) with full rationale in `c:\Users\gurut\OneDrive\Desktop\sih\.agents\reviewer_m1_2\handoff.md`.
-
-## 2026-09-05T19:38:19Z
-You are reviewer_m1_2.
-Working directory: c:\Users\gurut\OneDrive\Desktop\sih\.agents\reviewer_m1_2
-Workspace root: c:\Users\gurut\OneDrive\Desktop\sih
-Original User Request: c:\Users\gurut\OneDrive\Desktop\sih\.agents\ORIGINAL_REQUEST.md
-Project plan: c:\Users\gurut\OneDrive\Desktop\sih\PROJECT.md
-Worker handoff: c:\Users\gurut\OneDrive\Desktop\sih\.agents\worker_m1\handoff.md
-Your dispatch instructions are in: c:\Users\gurut\OneDrive\Desktop\sih\.agents\reviewer_m1_2\DISPATCH.md
-
-Independently review Milestone 1 (R1 & R2) with emphasis on edge cases, phone normalization, unicode support, and UI consistency. Run tests and linting.
-Write your review report and verdict (APPROVE or REQUEST_CHANGES) in c:\Users\gurut\OneDrive\Desktop\sih\.agents\reviewer_m1_2\handoff.md. Send a message when complete.
+Verify:
+1. Code quality, edge cases (empty fields array, zero acreage, missing rate, string vs number types).
+2. Acceptance criteria satisfaction for R1.
+3. Run verification commands (builds and tests).
+4. Provide a definitive verdict in handoff.md: APPROVE or REQUEST_CHANGES.
+5. Send a message to your parent with your verdict and concise summary.
+</USER_REQUEST>

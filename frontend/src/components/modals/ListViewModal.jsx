@@ -28,37 +28,37 @@ export default function ListViewModal({ type, onClose, onSelectCluster }) {
   useEffect(() => {
     const fetchData = () => {
       if (type === 'activity') {
-        fetch('http://localhost:8000/api/v1/analytics/activity-feed')
+        fetch(`http://${window.location.hostname}:8000/api/v1/analytics/activity-feed`)
           .then(res => res.json())
           .then(data => setActivities(data))
           .catch(err => console.error(err));
       }
       if (type === 'notifications') {
-        fetch('http://localhost:8000/api/v1/analytics/alerts')
+        fetch(`http://${window.location.hostname}:8000/api/v1/analytics/alerts`)
           .then(res => res.json())
           .then(data => setAlerts(data))
           .catch(err => console.error(err));
       }
       if (type === 'routes') {
-        fetch('http://localhost:8000/api/v1/routes')
+        fetch(`http://${window.location.hostname}:8000/api/v1/routes`)
           .then(res => res.json())
           .then(data => setRoutes(data.data || []))
           .catch(err => console.error(err));
       }
       if (type === 'buyers') {
-        fetch('http://localhost:8000/api/v1/buyers')
+        fetch(`http://${window.location.hostname}:8000/api/v1/buyers`)
           .then(res => res.json())
           .then(data => setBuyers(data.data || []))
           .catch(err => console.error(err));
       }
       if (type === 'fields') {
-        fetch('http://localhost:8000/api/v1/fields')
+        fetch(`http://${window.location.hostname}:8000/api/v1/fields`)
           .then(res => res.json())
           .then(data => setFields(data.data || []))
           .catch(err => console.error(err));
       }
       if (type === 'clusters' || type === 'risk') {
-        fetch('http://localhost:8000/api/v1/clusters')
+        fetch(`http://${window.location.hostname}:8000/api/v1/clusters`)
           .then(res => res.json())
           .then(data => setClusters(data.data || []))
           .catch(err => console.error(err));

@@ -65,7 +65,7 @@ export default function RegisterOnBehalfModal({ onClose, onSuccess }) {
         registered_by_phone: registrarData.phone,
         registration_type: 'assisted',
       };
-      await fetch('http://localhost:8000/api/v1/fields/register', {
+      await fetch(`http://${window.location.hostname}:8000/api/v1/fields/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

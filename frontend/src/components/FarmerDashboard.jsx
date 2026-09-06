@@ -6,24 +6,7 @@ import {
 } from 'lucide-react';
 import { Joyride, STATUS } from 'react-joyride';
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const PAYMENT_HISTORY = [
-  { date: '15 Aug 2026', field: 'Farm A', tonnes: 22.5, rate: 2500, total: 56250, mode: 'UPI', status: 'Paid' },
-  { date: '12 Jul 2026', field: 'Farm A', tonnes: 10.2, rate: 2400, total: 24480, mode: 'Bank Transfer', status: 'Paid' },
-  { date: '03 Jun 2026', field: 'Farm C', tonnes: 8.0, rate: 2350, total: 18800, mode: 'UPI', status: 'Paid' },
-  { date: '18 Apr 2026', field: 'Farm B', tonnes: 14.3, rate: 2300, total: 32890, mode: 'UPI', status: 'Paid' },
-  { date: '22 Sep 2026', field: 'Farm B', tonnes: 28.0, rate: 2500, total: 70000, mode: 'Bank Transfer', status: 'Pending' },
-];
-
-const NOTIFICATIONS = [
-  { id: 1, icon: '✅', text: 'Farm B matched with GreenFuel Plant, Bathinda', time: '2h ago', type: 'success' },
-  { id: 2, icon: '🚛', text: 'Truck dispatched for Farm A — ETA 47 min', time: '1h ago', type: 'info' },
-  { id: 3, icon: '💰', text: 'Payment ₹56,250 credited to your UPI', time: 'Yesterday', type: 'success' },
-  { id: 4, icon: '⚠️', text: 'Harvest window closing in 2 days for Farm B', time: '2 days ago', type: 'warning' },
-  { id: 5, icon: '📋', text: 'Welcome to StubbleConnect! Your profile is complete.', time: '5 days ago', type: 'neutral' },
-];
-
+// ─── Price Trend Data ──────────────────────────────────────────────────────────
 const PRICE_POINTS = [2200, 2350, 2300, 2450, 2500, 2480, 2500];
 
 // ─── Sparkline SVG ─────────────────────────────────────────────────────────────
@@ -51,9 +34,10 @@ function Sparkline({ data, color = '#10b981' }) {
 }
 
 // ─── Inline Modals ──────────────────────────────────────────────────────────────
-function FieldDetailModal({ field, onClose }) {
+function FieldDetailModal({ field, onClose, onShowToast }) {
   if (!field) return null;
-  const colors = { emerald: 'bg-emerald-100 text-emerald-700', amber: 'bg-amber-100 text-amber-700', blue: 'bg-blue-100 text-blue-700' };
+  const colors = { emerald: 'bg-emerald-100 text-emerald-700', amber: 'bg-amber-100 text-amber-700', blue: 'bg-blue-100 text-blue-700', gray: 'bg-gray-100 text-gray-700', grey: 'bg-gray-100 text-gray-700' };
+  const statusColor = field.status_color || field.statusColor || 'blue';
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
@@ -67,15 +51,15 @@ function FieldDetailModal({ field, onClose }) {
         <div className="p-5 space-y-3 text-sm">
           <div className="flex justify-between items-center">
             <span className="text-gray-500">Status</span>
-            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${colors[field.statusColor]}`}>{field.status}</span>
+            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${colors[statusColor] || colors.blue}`}>{field.status}</span>
           </div>
           {[
-            ['Area', `${field.acres} Acres`],
-            ['Crop Type', field.crop],
-            ['Harvest Date', field.harvestDate],
-            ['Est. Biomass', `${field.biomassEst} Tonnes`],
-            ['Nearest Buyer', field.nearestBuyer],
-            ['Distance to Buyer', field.distance],
+            ['Area', `${field.acres || 0} Acres`],
+            ['Crop Type', field.crop_type || field.crop || 'Paddy'],
+            ['Harvest Date', field.harvest_date || field.harvestDate || 'Not set'],
+            ['Est. Biomass', `${field.biomass_est ?? field.biomassEst ?? field.biomass ?? 0} Tonnes`],
+            ['Nearest Buyer', field.nearestBuyer || 'GreenFuel Bio-CNG Plant'],
+            ['Distance to Buyer', field.distance || '12 km'],
           ].map(([k, v]) => (
             <div key={k} className="flex justify-between py-1.5 border-b border-gray-50">
               <span className="text-gray-500">{k}</span>
@@ -84,7 +68,7 @@ function FieldDetailModal({ field, onClose }) {
           ))}
           <div className="pt-2 flex gap-2">
             <button onClick={onClose} className="flex-1 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg text-xs cursor-pointer hover:bg-gray-200">Close</button>
-            <button onClick={() => { alert('Map view coming soon!'); onClose(); }}
+            <button onClick={() => { if (onShowToast) onShowToast('Map view coming soon!'); onClose(); }}
               className="flex-1 py-2 bg-[#0a251c] text-white font-semibold rounded-lg text-xs cursor-pointer hover:bg-[#12382b] flex items-center justify-center gap-1">
               <MapPin className="w-3.5 h-3.5" /> View on Map
             </button>
@@ -193,7 +177,7 @@ function RegisterHarvestModal({ farmerUser, onClose, onSuccess, t }) {
         status: 'Pending'
       };
 
-      const res = await fetch('http://localhost:8000/api/v1/fields/register', {
+      const res = await fetch(`http://${window.location.hostname}:8000/api/v1/fields/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -312,8 +296,27 @@ function RegisterHarvestModal({ farmerUser, onClose, onSuccess, t }) {
 }
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
-export default function FarmerDashboard({ farmerUser, onLogout: _onLogout, onRegisterClick: _onRegisterClick }) {
-  const [activeTab, setActiveTab] = useState('overview');
+export default function FarmerDashboard({
+  farmerUser,
+  fields: propFields,
+  activeTab: propActiveTab,
+  onTabChange,
+  onLogout: _onLogout,
+  onRegisterClick: _onRegisterClick
+}) {
+  const [internalTab, setInternalTab] = useState('overview');
+  const activeTab = propActiveTab || internalTab;
+
+  const setActiveTab = (tab) => {
+    setInternalTab(tab);
+    if (onTabChange) onTabChange(tab);
+  };
+
+  useEffect(() => {
+    if (propActiveTab) {
+      setInternalTab(propActiveTab);
+    }
+  }, [propActiveTab]);
   const [selectedField, setSelectedField] = useState(null);
   const [showPickupOTP, setShowPickupOTP] = useState(false);
   const [showRegisterHarvest, setShowRegisterHarvest] = useState(false);
@@ -407,14 +410,131 @@ export default function FarmerDashboard({ farmerUser, onLogout: _onLogout, onReg
   const tier = farmerUser?.tier || 'Green';
   const _joinedDate = farmerUser?.joinedDate || farmerUser?.joined_date || '—';
   
-  const myFields = farmerUser?.fields || [];
+  const myFields = propFields || farmerUser?.fields || [];
   const hasFields = myFields.length > 0;
+
+  // Calculate payments dynamically from completed fields (R1 Acceptance Criteria)
+  const completedFields = myFields
+    .filter(f => f.status === 'Completed' || f.status === 'Sold & Paid')
+    .map(f => {
+      const tonnes = Number(f.biomass_est || f.biomass || ((f.acres || 0) * 2.5) || 0);
+      const rate = Number(f.rate || 2500);
+      const calculatedPayout = tonnes * rate;
+      return {
+        ...f,
+        calculatedTonnes: tonnes,
+        calculatedRate: rate,
+        calculatedPayout
+      };
+    });
+
+  const totalPaid = completedFields.reduce((acc, f) => acc + (f.calculatedPayout || (Number(f.biomass_est || f.biomass || ((f.acres || 0) * 2.5) || 0) * Number(f.rate || 2500))), 0);
+
+  // Dynamically generate notifications from real field states (R1 Acceptance Criteria)
+  const dynamicAlerts = React.useMemo(() => {
+    const alerts = [];
+    let id = 1;
+
+    myFields.forEach((field, i) => {
+      const fieldName = field.name || `Farm ${String.fromCharCode(65 + i)}`;
+      const location = field.location || field.village || village;
+      const status = field.status || 'Registered';
+      const tonnes = Number(field.biomass_est || field.biomass || ((field.acres || 0) * 2.5) || 0);
+      const rate = Number(field.rate || 2500);
+      const payout = tonnes * rate;
+      const harvestDate = field.harvest_date || field.harvestDate || 'Upcoming';
+
+      if (status === 'Completed' || status === 'Sold & Paid') {
+        alerts.push({
+          id: id++,
+          icon: '💰',
+          text: `Biomass collection completed for ${fieldName}. Payout of ₹${payout.toLocaleString()} processed.`,
+          time: `Completed (${harvestDate})`,
+          type: 'success'
+        });
+        alerts.push({
+          id: id++,
+          icon: '✅',
+          text: `Field collection verified and closed for ${fieldName} in ${location} (${tonnes}T collected).`,
+          time: 'Verified',
+          type: 'success'
+        });
+      } else if (status === 'Pickup Scheduled') {
+        alerts.push({
+          id: id++,
+          icon: '🚛',
+          text: `Logistics scheduled for ${fieldName} — Pickup pending. Truck assigned for collection.`,
+          time: `Target Date: ${harvestDate}`,
+          type: 'info'
+        });
+        alerts.push({
+          id: id++,
+          icon: '📋',
+          text: `Field registered: ${fieldName} in ${location} (${field.acres || 0} Acres, ${field.crop_type || 'Paddy'}).`,
+          time: 'Active',
+          type: 'neutral'
+        });
+      } else {
+        // Pending or Registered
+        alerts.push({
+          id: id++,
+          icon: '📋',
+          text: `Field registered: ${fieldName} in ${location} (${field.acres || 0} Acres, ${field.crop_type || 'Paddy'}). Pending cluster assignment.`,
+          time: `Harvest: ${harvestDate}`,
+          type: 'info'
+        });
+        alerts.push({
+          id: id++,
+          icon: '🌱',
+          text: `${fieldName} queued for biomass cluster aggregation & buyer matching.`,
+          time: 'Pending Route',
+          type: 'neutral'
+        });
+      }
+
+      // Check for approaching harvest window
+      if (field.harvest_date || field.harvestDate) {
+        try {
+          const hdStr = field.harvest_date || field.harvestDate;
+          const diff = Math.ceil((new Date(hdStr) - new Date()) / (1000 * 60 * 60 * 24));
+          if (diff <= 3 && status !== 'Completed' && status !== 'Sold & Paid') {
+            alerts.push({
+              id: id++,
+              icon: '⚠️',
+              text: `Harvest window closing in ${Math.max(0, diff)} days for ${fieldName}`,
+              time: 'Urgent',
+              type: 'warning'
+            });
+          }
+        } catch { /* ignore date parse errors */ }
+      }
+    });
+
+    if (alerts.length === 0) {
+      alerts.push({
+        id: id++,
+        icon: '🌾',
+        text: `Welcome to StubbleConnect, ${name}! Your profile is verified with FPO ${fpoId}.`,
+        time: 'Just now',
+        type: 'neutral'
+      });
+      alerts.push({
+        id: id++,
+        icon: '📢',
+        text: 'No active fields found. Register your field to begin biomass collection and logistics matching.',
+        time: 'Action Required',
+        type: 'info'
+      });
+    }
+
+    return alerts;
+  }, [myFields, name, village, fpoId]);
 
   const tabs = [
     { id: 'overview', label: t('overview') },
     { id: 'fields', label: t('fields') },
     { id: 'payments', label: t('payments') },
-    { id: 'alerts', label: t('alerts'), badge: 2 },
+    { id: 'alerts', label: t('alerts'), badge: dynamicAlerts.length },
   ];
 
   const statusColors = {
@@ -680,13 +800,13 @@ export default function FarmerDashboard({ farmerUser, onLogout: _onLogout, onReg
         {/* ═══════════ PAYMENTS TAB (feature #9) ═══════════ */}
         {activeTab === 'payments' && (
           <div className="p-5 space-y-4">
-            {!hasFields ? (
+            {completedFields.length === 0 ? (
               <div className="text-center py-10 border border-dashed border-gray-300 rounded-xl bg-gray-50">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <IndianRupee className="w-8 h-8 text-blue-600" />
                 </div>
-                <h3 className="font-bold text-gray-900 mb-1">No Payments Yet</h3>
-                <p className="text-sm text-gray-500 max-w-xs mx-auto">Register a field and sell biomass to see your earnings here.</p>
+                <h3 className="font-bold text-gray-900 mb-1">No Completed Field Payouts</h3>
+                <p className="text-sm text-gray-500 max-w-xs mx-auto">Payouts are calculated dynamically once biomass collection is marked Completed.</p>
               </div>
             ) : (
               <>
@@ -704,27 +824,35 @@ export default function FarmerDashboard({ farmerUser, onLogout: _onLogout, onReg
                       </tr>
                     </thead>
                     <tbody>
-                      {PAYMENT_HISTORY.map((row, i) => (
-                        <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                          <td className="px-3 py-2.5 text-gray-600">{row.date}</td>
-                          <td className="px-3 py-2.5 font-medium text-gray-900">{row.field}</td>
-                          <td className="px-3 py-2.5 text-gray-700">{row.tonnes}</td>
-                          <td className="px-3 py-2.5 text-gray-700">₹{row.rate.toLocaleString()}</td>
-                          <td className="px-3 py-2.5 font-bold text-gray-900">₹{row.total.toLocaleString()}</td>
-                          <td className="px-3 py-2.5 text-gray-600">{row.mode}</td>
-                          <td className="px-3 py-2.5">
-                            <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
-                              row.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                            }`}>{row.status}</span>
-                          </td>
-                        </tr>
-                      ))}
+                      {completedFields.map((f, i) => {
+                        const tonnes = f.calculatedTonnes;
+                        const rate = f.calculatedRate;
+                        const total = f.calculatedPayout;
+                        const dateVal = f.harvest_date || f.harvestDate || 'Completed';
+                        const fieldName = f.name || `Farm ${String.fromCharCode(65 + i)}`;
+                        const mode = f.payment_mode || (i % 2 === 0 ? 'UPI' : 'Direct Bank Transfer');
+                        return (
+                          <tr key={f.id || i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                            <td className="px-3 py-2.5 text-gray-600">{dateVal}</td>
+                            <td className="px-3 py-2.5 font-medium text-gray-900">{fieldName}</td>
+                            <td className="px-3 py-2.5 text-gray-700">{tonnes}</td>
+                            <td className="px-3 py-2.5 text-gray-700">₹{rate.toLocaleString()}</td>
+                            <td className="px-3 py-2.5 font-bold text-gray-900">₹{total.toLocaleString()}</td>
+                            <td className="px-3 py-2.5 text-gray-600">{mode}</td>
+                            <td className="px-3 py-2.5">
+                              <span className="px-2 py-0.5 rounded-full font-bold text-[10px] bg-emerald-100 text-emerald-700">
+                                Paid
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                     <tfoot>
                       <tr className="bg-emerald-50">
                         <td colSpan={4} className="px-3 py-2.5 font-bold text-gray-700">Total Paid</td>
                         <td className="px-3 py-2.5 font-black text-emerald-700">
-                          ₹{PAYMENT_HISTORY.filter(r => r.status === 'Paid').reduce((a, r) => a + r.total, 0).toLocaleString()}
+                          ₹{totalPaid.toLocaleString()}
                         </td>
                         <td colSpan={2} />
                       </tr>
@@ -739,7 +867,7 @@ export default function FarmerDashboard({ farmerUser, onLogout: _onLogout, onReg
         {/* ═══════════ ALERTS TAB (feature #11) ═══════════ */}
         {activeTab === 'alerts' && (
           <div className="p-5 space-y-3">
-            {!hasFields ? (
+            {dynamicAlerts.length === 0 ? (
               <div className="text-center py-10 border border-dashed border-gray-300 rounded-xl bg-gray-50">
                 <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Bell className="w-8 h-8 text-amber-600" />
@@ -749,26 +877,29 @@ export default function FarmerDashboard({ farmerUser, onLogout: _onLogout, onReg
               </div>
             ) : (
               <>
-                <h3 className="font-bold text-gray-900 text-sm">Recent Notifications</h3>
-                {NOTIFICATIONS.map(n => (
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-gray-900 text-sm">Recent Notifications</h3>
+                  <span className="text-xs text-gray-400">{dynamicAlerts.length} updates</span>
+                </div>
+                {dynamicAlerts.map(n => (
                   <div key={n.id} className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs ${
                     n.type === 'success' ? 'bg-emerald-50 border-emerald-200' :
                     n.type === 'warning' ? 'bg-amber-50 border-amber-200' :
                     n.type === 'info' ? 'bg-blue-50 border-blue-200' :
                     'bg-gray-50 border-gray-200'
-              }`}>
-                <span className="text-base mt-0.5 shrink-0">{n.icon}</span>
-                <div className="flex-1">
-                  <p className={`font-medium leading-relaxed ${
-                    n.type === 'success' ? 'text-emerald-800' :
-                    n.type === 'warning' ? 'text-amber-800' :
-                    n.type === 'info' ? 'text-blue-800' :
-                    'text-gray-700'
-                  }`}>{n.text}</p>
-                  <p className="text-gray-400 mt-0.5">{n.time}</p>
-                </div>
-              </div>
-            ))}
+                  }`}>
+                    <span className="text-base mt-0.5 shrink-0">{n.icon}</span>
+                    <div className="flex-1">
+                      <p className={`font-medium leading-relaxed ${
+                        n.type === 'success' ? 'text-emerald-800' :
+                        n.type === 'warning' ? 'text-amber-800' :
+                        n.type === 'info' ? 'text-blue-800' :
+                        'text-gray-700'
+                      }`}>{n.text}</p>
+                      <p className="text-gray-400 mt-0.5">{n.time}</p>
+                    </div>
+                  </div>
+                ))}
               </>
             )}
           </div>
@@ -786,7 +917,7 @@ export default function FarmerDashboard({ farmerUser, onLogout: _onLogout, onReg
       )}
 
       {/* ── Modals ── */}
-      {selectedField && <FieldDetailModal field={selectedField} onClose={() => setSelectedField(null)} />}
+      {selectedField && <FieldDetailModal field={selectedField} onClose={() => setSelectedField(null)} onShowToast={showToast} />}
       {showPickupOTP && <PickupOTPModal onClose={() => setShowPickupOTP(false)} />}
       {showRegisterHarvest && (
         <RegisterHarvestModal

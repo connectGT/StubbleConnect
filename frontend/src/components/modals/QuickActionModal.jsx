@@ -76,7 +76,7 @@ export default function QuickActionModal({ actionType, onClose, onSuccess, farme
           status: 'Pending'
         };
 
-        const res = await fetch('http://localhost:8000/api/v1/fields/register', {
+        const res = await fetch(`http://${window.location.hostname}:8000/api/v1/fields/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -97,7 +97,7 @@ export default function QuickActionModal({ actionType, onClose, onSuccess, farme
           latitude: coords.lat,
           longitude: coords.lng
         };
-        const res = await fetch('http://localhost:8000/api/v1/buyers/register', {
+        const res = await fetch(`http://${window.location.hostname}:8000/api/v1/buyers/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -106,14 +106,14 @@ export default function QuickActionModal({ actionType, onClose, onSuccess, farme
         const data = await res.json();
         setSuccessMsg(data.message || `Buyer ${payload.plant_name} onboarded at ${formData.buyerLocation}!`);
       } else if (actionType === 'run_clustering') {
-        const res = await fetch('http://localhost:8000/api/v1/clusters/recompute', {
+        const res = await fetch(`http://${window.location.hostname}:8000/api/v1/clusters/recompute`, {
           method: 'POST'
         });
         if (!res.ok) throw new Error('API request failed');
         const data = await res.json();
         setSuccessMsg(data.message || 'DBSCAN spatial clustering completed!');
       } else if (actionType === 'generate_routes') {
-        const res = await fetch('http://localhost:8000/api/v1/routes/optimize', {
+        const res = await fetch(`http://${window.location.hostname}:8000/api/v1/routes/optimize`, {
           method: 'POST'
         });
         if (!res.ok) throw new Error('API request failed');

@@ -31,7 +31,7 @@ export default function App() {
         try { phone = JSON.parse(saved)?.phone; } catch { phone = null; }
       }
       if (phone) {
-        fetch(`http://localhost:8000/api/v1/farmers/me?phone=${phone}`)
+        fetch(`http://${window.location.hostname}:8000/api/v1/farmers/me?phone=${phone}`)
           .then(res => res.json())
           .then(data => {
             if (data.status === 'success' && data.data) {
@@ -75,7 +75,7 @@ export default function App() {
 
   React.useEffect(() => {
     const fetchStats = () => {
-      fetch('http://localhost:8000/api/v1/analytics/dashboard-kpi')
+      fetch(`http://${window.location.hostname}:8000/api/v1/analytics/dashboard-kpi`)
         .then(res => res.json())
         .then(data => {
           setStats([

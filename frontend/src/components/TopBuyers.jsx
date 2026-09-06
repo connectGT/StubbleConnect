@@ -11,7 +11,7 @@ export default function TopBuyers({ onViewAll, onSelectBuyer }) {
 
   useEffect(() => {
     const fetchData = () => {
-      fetch('http://localhost:8000/api/v1/buyers')
+      fetch(`http://${window.location.hostname}:8000/api/v1/buyers`)
         .then(res => res.json())
         .then(data => {
           if (data.status === 'success') {

@@ -1,24 +1,15 @@
-# Dispatch to challenger_m1_2
+# Dispatch: Challenger 2 for Milestone 1 (Dynamic Farmer Panel Tabs)
+Empirically test FarmerDashboard Payments and Alerts tabs with extreme and dynamic payloads.
+Authoritative Request: c:\Users\gurut\OneDrive\Desktop\sih\.agents\ORIGINAL_REQUEST.md
+Worker Handoff: c:\Users\gurut\OneDrive\Desktop\sih\.agents\worker_m1_farmer\handoff.md
+Project Spec: c:\Users\gurut\OneDrive\Desktop\sih\.agents\orchestrator_3\PROJECT.md
 
-## Role & Mission
-Empirically challenge frontend state synchronization and data contracts for Milestone 1.
+## 2026-09-06T01:15:00Z
+Adversarially probe `backend/app/api/v1/endpoints/farmers.py` and `frontend/src/components/FarmerDashboard.jsx`.
+Write and execute verification tests:
+1. Verify `build_farmer_profile()` behavior when fields are marked 'Completed' in database vs 'Pending' vs other states.
+2. Verify total earnings and biomass calculations.
+3. Verify tab switching and badge rendering in FarmerDashboard.
+4. Report test results and state your verdict: APPROVE or REJECT in handoff.md.
+5. Send a message to your parent with your verdict.
 
-## Instructions
-- Read `c:\Users\gurut\OneDrive\Desktop\sih\.agents\ORIGINAL_REQUEST.md`, `c:\Users\gurut\OneDrive\Desktop\sih\PROJECT.md`, and `c:\Users\gurut\OneDrive\Desktop\sih\.agents\worker_m1\handoff.md`.
-- Inspect and verify:
-  - Frontend component contract conformance: verify `QuickActionModal.jsx`, `FarmerDashboard.jsx`, `ListViewModal.jsx`, `BiomassMap.jsx`.
-  - Check whether `refresh-dashboard-data` event is correctly emitted and caught across the components.
-  - Verify that mock data fallbacks in `mockData.js` mirror backend seed structures so offline/fallback rendering does not crash.
-  - Check for any React state desynchronizations or prop mismatches.
-
-## 2026-09-05T19:38:19Z
-You are challenger_m1_2.
-Working directory: c:\Users\gurut\OneDrive\Desktop\sih\.agents\challenger_m1_2
-Workspace root: c:\Users\gurut\OneDrive\Desktop\sih
-Original User Request: c:\Users\gurut\OneDrive\Desktop\sih\.agents\ORIGINAL_REQUEST.md
-Project plan: c:\Users\gurut\OneDrive\Desktop\sih\PROJECT.md
-Worker handoff: c:\Users\gurut\OneDrive\Desktop\sih\.agents\worker_m1\handoff.md
-Your dispatch instructions are in: c:\Users\gurut\OneDrive\Desktop\sih\.agents\challenger_m1_2\DISPATCH.md
-
-Empirically verify Milestone 1 (R1 & R2) frontend contracts: QuickActionModal, FarmerDashboard, ListViewModal, BiomassMap, and custom events.
-Write your findings and empirical confirmation in c:\Users\gurut\OneDrive\Desktop\sih\.agents\challenger_m1_2\handoff.md. Send a message when complete.
